@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${RXWF_POSTGRES_USER:-rxwf}
+      POSTGRES_PASSWORD: ${RXWF_POSTGRES_PASSWORD:?RXWF_POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${RXWF_POSTGRES_DB:-rxwf}
+    ports:
+      - "${RXWF_POSTGRES_PORT:-127.0.0.1:5432:5432}"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${RXWF_POSTGRES_USER:-rxwf} -d ${RXWF_POSTGRES_DB:-rxwf}",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - rxwf-pg-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: >
+      redis-server --requirepass ${RXWF_REDIS_PASSWORD:?RXWF_REDIS_PASSWORD required}
+    ports:
+      - "${RXWF_REDIS_PORT:-127.0.0.1:6379:6379}"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "-a",
+          "${RXWF_REDIS_PASSWORD}",
+          "ping",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  rxwf-pg-data:

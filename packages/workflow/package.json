@@ -1,0 +1,33 @@
+{
+  "name": "@rxwf/workflow",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./normalize": {
+      "types": "./dist/normalize-node-parameters.d.ts",
+      "import": "./dist/normalize-node-parameters.js"
+    },
+    "./graph-cycle": {
+      "types": "./dist/graph-cycle.d.ts",
+      "import": "./dist/graph-cycle.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rxwf/expression": "workspace:*",
+    "@rxwf/skill-runtime": "workspace:*",
+    "@rxwf/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

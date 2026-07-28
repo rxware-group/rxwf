@@ -1,0 +1,16 @@
+{
+  "serverUrl": "https://rxwf.example.com",
+  "runnerId": "uuid",
+  "credentialFile": "/etc/rxwf-runner/credential",
+  "name": "win-build-01",
+  "maxConcurrent": 4,
+  "extensions": [
+    "@rxwf/runner-builtin-plus",
+    "@acme/rxwf-wmi-executor",
+    "./plugins/custom.js"
+  ],
+  "labels": ["ci", "windows"],
+  "crewaiSidecarUrl": "http://127.0.0.1:8071",
+  "logLevel": "info",
+  "shutdownTimeoutMs": 120000
+}

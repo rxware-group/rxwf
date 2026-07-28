@@ -1,0 +1,24 @@
+manifestVersion: 1
+id: startcycle
+name: Start Development Cycle
+description: Start the Autonomous AI Developer Pipeline sequence with a new idea
+provenance: antigravity
+triggers:
+  slashCommand: startcycle
+steps:
+  - id: pm-spec
+    agentRole: product_manager
+    skillRef: write_specs
+    promptTemplate: "Execute skill using idea: {{input.idea}}"
+    gate:
+      type: human_approval
+      onReject: loop
+  - id: implement
+    agentRole: full_stack_engineer
+    skillRef: generate_code
+  - id: qa
+    agentRole: qa_engineer
+    skillRef: audit_code
+  - id: deploy
+    agentRole: devops
+    skillRef: deploy_app

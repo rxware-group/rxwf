@@ -1,0 +1,252 @@
+import { and, desc, eq, inArray } from 'drizzle-orm';
+import type {
+  KnowledgeBaseRecord,
+  KnowledgeDocumentRecord,
+  KnowledgeRepository,
+} from '@rxwf/providers-contracts';
+import type { LiteDatabase } from './db.js';
+import {
+  knowledgeBases,
+  knowledgeChunks,
+  knowledgeDocuments,
+} from './drizzle/schema.js';
+
+function thresholdToStore(n: number): number {
+  return Math.round(n * 100);
+}
+
+function thresholdFromStore(n: number): number {
+  return n / 100;
+}
+
+export function createLiteKnowledgeRepository(db: LiteDatabase): KnowledgeRepository {
+  return {
+    async createBase(input) {
+      const now = new Date();
+      await db.insert(knowledgeBases).values({
+        id: input.id,
+        name: input.name,
+        description: input.description,
+        ownerUserId: input.ownerUserId,
+        embeddingModel: input.embeddingModel,
+        chunkSize: input.chunkSize,
+        chunkOverlap: input.chunkOverlap,
+        topK: input.topK,
+        similarityThreshold: thresholdToStore(input.similarityThreshold),
+        hybridSearch: input.hybridSearchEnabled,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { ...input, createdAt: now, updatedAt: now };
+    },
+
+    async updateBase(id, patch) {
+      const existing = await this.getBase(id);
+      if (!existing) return null;
+      const now = new Date();
+      const next = {
+        ...existing,
+        ...patch,
+        similarityThreshold:
+          patch.similarityThreshold !== undefined
+            ? patch.similarityThreshold
+            : existing.similarityThreshold,
+        updatedAt: now,
+      };
+      await db
+        .update(knowledgeBases)
+        .set({
+          name: next.name,
+          description: next.description,
+          embeddingModel: next.embeddingModel,
+          chunkSize: next.chunkSize,
+          chunkOverlap: next.chunkOverlap,
+          topK: next.topK,
+          similarityThreshold: thresholdToStore(next.similarityThreshold),
+          hybridSearch: next.hybridSearchEnabled,
+          updatedAt: now,
+        })
+        .where(eq(knowledgeBases.id, id));
+      return next;
+    },
+
+    async deleteBase(id) {
+      const existing = await this.getBase(id);
+      if (!existing) return false;
+      await db.delete(knowledgeBases).where(eq(knowledgeBases.id, id));
+      return true;
+    },
+
+    async getBase(id) {
+      const rows = await db
+        .select()
+        .from(knowledgeBases)
+        .where(eq(knowledgeBases.id, id))
+        .limit(1);
+      return rows[0] ? mapBase(rows[0]) : null;
+    },
+
+    async listBases(opts?: { ids?: string[]; ownerUserId?: string }) {
+      const conditions = [];
+      if (opts?.ids?.length) {
+        conditions.push(inArray(knowledgeBases.id, opts.ids));
+      }
+      if (opts?.ownerUserId) {
+        conditions.push(eq(knowledgeBases.ownerUserId, opts.ownerUserId));
+      }
+      const whereClause =
+        conditions.length > 1
+          ? and(...conditions)
+          : conditions.length === 1
+            ? conditions[0]
+            : undefined;
+      let query = db.select().from(knowledgeBases).orderBy(desc(knowledgeBases.updatedAt));
+      if (whereClause) {
+        query = query.where(whereClause) as typeof query;
+      }
+      const rows = await query;
+      return rows.map(mapBase);
+    },
+
+    async createDocument(input) {
+      const now = new Date();
+      await db.insert(knowledgeDocuments).values({
+        id: input.id,
+        knowledgeBaseId: input.knowledgeBaseId,
+        name: input.name,
+        mimeType: input.mimeType,
+        storagePath: input.storagePath,
+        sizeBytes: input.sizeBytes,
+        status: input.status,
+        errorMessage: input.errorMessage ?? null,
+        chunkCount: input.chunkCount ?? 0,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return {
+        ...input,
+        errorMessage: input.errorMessage ?? null,
+        chunkCount: input.chunkCount ?? 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+    },
+
+    async updateDocument(id, patch) {
+      const existing = await this.getDocument(id);
+      if (!existing) return null;
+      const now = new Date();
+      const next = { ...existing, ...patch, updatedAt: now };
+      await db
+        .update(knowledgeDocuments)
+        .set({
+          name: next.name,
+          storagePath: next.storagePath,
+          sizeBytes: next.sizeBytes,
+          status: next.status,
+          errorMessage: next.errorMessage,
+          chunkCount: next.chunkCount,
+          updatedAt: now,
+        })
+        .where(eq(knowledgeDocuments.id, id));
+      return next;
+    },
+
+    async deleteDocument(id) {
+      const existing = await this.getDocument(id);
+      if (!existing) return false;
+      await db.delete(knowledgeDocuments).where(eq(knowledgeDocuments.id, id));
+      return true;
+    },
+
+    async getDocument(id) {
+      const rows = await db
+        .select()
+        .from(knowledgeDocuments)
+        .where(eq(knowledgeDocuments.id, id))
+        .limit(1);
+      return rows[0] ? mapDoc(rows[0]) : null;
+    },
+
+    async listDocuments(knowledgeBaseId) {
+      const rows = await db
+        .select()
+        .from(knowledgeDocuments)
+        .where(eq(knowledgeDocuments.knowledgeBaseId, knowledgeBaseId))
+        .orderBy(desc(knowledgeDocuments.updatedAt));
+      return rows.map(mapDoc);
+    },
+
+    async deleteChunksForDocument(documentId) {
+      await db.delete(knowledgeChunks).where(eq(knowledgeChunks.documentId, documentId));
+    },
+
+    async insertChunks(rows) {
+      if (rows.length === 0) return;
+      await db.insert(knowledgeChunks).values(
+        rows.map((r) => ({
+          id: r.id,
+          knowledgeBaseId: r.knowledgeBaseId,
+          documentId: r.documentId,
+          chunkIndex: r.chunkIndex,
+          text: r.text,
+          embeddingJson: JSON.stringify(r.embedding),
+          metadataJson: JSON.stringify(r.metadata ?? {}),
+        })),
+      );
+    },
+
+    async listChunks(knowledgeBaseId, opts) {
+      let query = db
+        .select()
+        .from(knowledgeChunks)
+        .where(eq(knowledgeChunks.knowledgeBaseId, knowledgeBaseId));
+      const rows = await query;
+      const filtered = opts?.documentId
+        ? rows.filter((r) => r.documentId === opts.documentId)
+        : rows;
+      const limited = opts?.limit ? filtered.slice(0, opts.limit) : filtered;
+      return limited.map((r) => ({
+        id: r.id,
+        knowledgeBaseId: r.knowledgeBaseId,
+        documentId: r.documentId,
+        chunkIndex: r.chunkIndex,
+        text: r.text,
+        metadata: JSON.parse(r.metadataJson) as Record<string, unknown>,
+      }));
+    },
+  };
+}
+
+function mapBase(row: typeof knowledgeBases.$inferSelect): KnowledgeBaseRecord {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    ownerUserId: row.ownerUserId,
+    embeddingModel: row.embeddingModel,
+    chunkSize: row.chunkSize,
+    chunkOverlap: row.chunkOverlap,
+    topK: row.topK,
+    similarityThreshold: thresholdFromStore(row.similarityThreshold),
+    hybridSearchEnabled: row.hybridSearch,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+function mapDoc(row: typeof knowledgeDocuments.$inferSelect): KnowledgeDocumentRecord {
+  return {
+    id: row.id,
+    knowledgeBaseId: row.knowledgeBaseId,
+    name: row.name,
+    mimeType: row.mimeType,
+    storagePath: row.storagePath,
+    sizeBytes: row.sizeBytes,
+    status: row.status as KnowledgeDocumentRecord['status'],
+    errorMessage: row.errorMessage,
+    chunkCount: row.chunkCount,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}

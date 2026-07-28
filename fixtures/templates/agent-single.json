@@ -1,0 +1,63 @@
+{
+  "category": "agent",
+  "description": "单 Agent + Chat Model + Memory（保存前需连接 ≥1 Tool）",
+  "schemaVersion": 1,
+  "name": "单 Agent",
+  "settings": { "workflowKind": "agent" },
+  "nodes": [
+    {
+      "id": "tr",
+      "type": "manualTrigger",
+      "name": "Manual",
+      "position": { "x": 80, "y": 120 },
+      "parameters": {}
+    },
+    {
+      "id": "agt",
+      "type": "aiAgent",
+      "name": "Agent",
+      "position": { "x": 320, "y": 120 },
+      "parameters": {
+        "role": "",
+        "goal": "",
+        "backstory": "",
+        "promptType": "auto",
+        "text": "",
+        "systemMessage": "",
+        "maxIterations": 10,
+        "timeoutMs": 120000,
+        "returnIntermediateSteps": true,
+        "sessionId": ""
+      }
+    },
+    {
+      "id": "mdl",
+      "type": "aiChatModel",
+      "name": "Model",
+      "position": { "x": 320, "y": 260 },
+      "parameters": { "provider": "ollama", "model": "llama3" }
+    },
+    {
+      "id": "mem",
+      "type": "aiMemory",
+      "name": "Memory",
+      "position": { "x": 80, "y": 260 },
+      "parameters": { "sessionId": "", "maxTurns": 20 }
+    }
+  ],
+  "connections": [
+    { "from": "tr", "to": "agt" },
+    {
+      "from": "mdl",
+      "to": "agt",
+      "fromOutput": "ai_languageModel",
+      "toInput": "ai_languageModel"
+    },
+    {
+      "from": "mem",
+      "to": "agt",
+      "fromOutput": "ai_memory",
+      "toInput": "ai_memory"
+    }
+  ]
+}

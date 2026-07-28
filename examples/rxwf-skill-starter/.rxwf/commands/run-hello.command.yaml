@@ -1,0 +1,5 @@
+id: run-hello
+label: Run Hello Skill
+action:
+  type: skill_run
+  skillPath: .rxwf/skills/hello

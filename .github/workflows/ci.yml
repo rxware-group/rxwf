@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm exec redocly lint docs/openapi.yaml
+        continue-on-error: true
+      - run: pnpm add -D ajv-cli
+      - run: pnpm exec ajv validate -s docs/schemas/workflow-definition.v1.schema.json -d fixtures/valid-workflow.json
+      - run: pnpm add -D dependency-cruiser
+      - run: pnpm lint:deps
+      - run: pnpm lint:ac-mapping
+      - run: pnpm lint:docs-index
+      - run: pnpm lint:legacy-names
+
+  standard-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rxwf
+          POSTGRES_PASSWORD: rxwf
+          POSTGRES_DB: rxwf
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rxwf"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rxwf/providers-standard build
+      - run: pnpm --filter @rxwf/providers-standard test
+        env:
+          RXWF_DATABASE_URL: postgres://rxwf:rxwf@localhost:5432/rxwf
+          RXWF_REDIS_URL: redis://localhost:6379
+      - run: pnpm --filter @rxwf/identity build
+      - run: pnpm --filter @rxwf/api build
+      - run: pnpm --filter @rxwf/api test -- src/integration/standard-profile.integration.test.ts
+        env:
+          RXWF_DATABASE_URL: postgres://rxwf:rxwf@localhost:5432/rxwf
+          RXWF_REDIS_URL: redis://localhost:6379

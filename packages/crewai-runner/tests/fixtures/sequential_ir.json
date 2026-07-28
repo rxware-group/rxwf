@@ -1,0 +1,45 @@
+{
+  "irVersion": 1,
+  "process": "sequential",
+  "executionBackend": "crewai",
+  "inputTask": "{\"topic\":\"AI\"}",
+  "crewParams": {},
+  "members": [
+    {
+      "nodeId": "a1",
+      "name": "Writer",
+      "role": "Writer",
+      "goal": "Write articles",
+      "backstory": "Professional writer",
+      "model": {
+        "provider": "ollama",
+        "model": "llama3"
+      },
+      "tools": []
+    },
+    {
+      "nodeId": "a2",
+      "name": "Editor",
+      "role": "Editor",
+      "goal": "Edit content",
+      "backstory": "Detail-oriented editor",
+      "model": {
+        "provider": "ollama",
+        "model": "llama3"
+      },
+      "tools": [],
+      "task": {
+        "description": "Review and polish the draft",
+        "expectedOutput": "Final polished article"
+      }
+    }
+  ],
+  "execution": {
+    "executionId": "ex-1",
+    "workflowId": "wf-1",
+    "crewNodeId": "crew",
+    "environment": "test",
+    "toolBridgeBaseUrl": "http://127.0.0.1:8787",
+    "toolBridgeToken": "tok"
+  }
+}

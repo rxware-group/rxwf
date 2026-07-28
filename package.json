@@ -1,0 +1,32 @@
+{
+  "name": "rx-workflow",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "predev": "node scripts/kill-dev-ports.mjs && pnpm --filter @rxwf/env build && pnpm --filter @rxwf/i18n-catalog build && pnpm --filter @rxwf/expression build && pnpm --filter @rxwf/identity build && pnpm --filter @rxwf/system-settings build && pnpm --filter @rxwf/skill-runtime build && pnpm --filter @rxwf/workflow build && pnpm --filter @rxwf/execution build && pnpm --filter @rxwf/mcp-client-pool build && pnpm --filter @rxwf/ai-runtime-stub build && pnpm --filter @rxwf/ai-runtime build && pnpm --filter @rxwf/node-runner build && pnpm --filter @rxwf/providers-lite build && pnpm --filter @rxwf/theme-catalog build",
+    "dev": "pnpm --parallel --filter @rxwf/api --filter @rxwf/web run dev",
+    "dev:wait": "pnpm --parallel --filter @rxwf/api run dev --filter @rxwf/web run dev:wait",
+    "start": "pnpm run dev",
+    "reset:data": "npx --yes kill-port 8787 5173 5174 && node scripts/reset-data.mjs",
+    "rxwf:migrate": "pnpm --filter @rxwf/providers-standard build && node scripts/rxwf-migrate.mjs",
+    "lint:deps": "depcruise packages apps --config .dependency-cruiser.cjs",
+    "lint:ac-mapping": "node scripts/lint-ac-mapping.mjs",
+    "lint:docs-index": "node scripts/lint-docs-index.mjs",
+    "lint:legacy-names": "node scripts/lint-no-legacy-names.mjs",
+    "test:ci-docs-index-gate": "node scripts/ci-docs-index.test.mjs",
+    "rxwf": "rxwf",
+    "rxwf-runner": "rxwf-runner"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@rxwf/cli": "workspace:*",
+    "@rxwf/runner-agent": "workspace:*",
+    "ajv-cli": "^5.0.0",
+    "dependency-cruiser": "^16.10.4",
+    "turbo": "^2.5.4"
+  }
+}

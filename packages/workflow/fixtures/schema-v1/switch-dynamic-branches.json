@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "name": "Switch Dynamic Branches",
+  "nodes": [
+    {
+      "id": "t1",
+      "type": "manualTrigger",
+      "name": "Manual",
+      "position": { "x": 0, "y": 0 },
+      "parameters": {}
+    },
+    {
+      "id": "sw1",
+      "type": "switch",
+      "name": "Switch",
+      "position": { "x": 220, "y": 0 },
+      "parameters": {
+        "branches": [
+          { "id": "branch-a", "label": "端口1", "condition": "{{ $json.route === 'a' }}" },
+          { "id": "branch-b", "label": "端口2", "condition": "{{ $json.route === 'b' }}" }
+        ]
+      }
+    },
+    {
+      "id": "set-a",
+      "type": "set",
+      "name": "Branch A",
+      "position": { "x": 440, "y": -80 },
+      "parameters": { "values": [{ "name": "branch", "value": "a" }] }
+    },
+    {
+      "id": "set-b",
+      "type": "set",
+      "name": "Branch B",
+      "position": { "x": 440, "y": 80 },
+      "parameters": { "values": [{ "name": "branch", "value": "b" }] }
+    }
+  ],
+  "connections": [
+    { "from": "t1", "to": "sw1" },
+    { "from": "sw1", "to": "set-a", "fromOutput": "branch-a" },
+    { "from": "sw1", "to": "set-b", "fromOutput": "branch-b" }
+  ]
+}

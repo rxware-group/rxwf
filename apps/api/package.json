@@ -1,0 +1,53 @@
+{
+  "name": "@rxwf/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --import tsx/esm --watch-path=./src --watch ./src/main.ts",
+    "start": "node dist/main.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rxwf/ai-runtime": "workspace:*",
+    "@rxwf/ai-runtime-stub": "workspace:*",
+    "@rxwf/chat": "workspace:*",
+    "@rxwf/chat-bots": "workspace:*",
+    "@rxwf/credential": "workspace:*",
+    "@rxwf/env": "workspace:*",
+    "@rxwf/variables": "workspace:*",
+    "@rxwf/mcp-client-pool": "workspace:*",
+    "@rxwf/plugin-host": "workspace:*",
+    "@rxwf/providers-standard": "workspace:*",
+    "@rxwf/i18n-catalog": "workspace:*",
+    "@rxwf/mcp-server": "workspace:*",
+    "@rxwf/theme-catalog": "workspace:*",
+    "@rxwf/execution": "workspace:*",
+    "@rxwf/identity": "workspace:*",
+    "@rxwf/knowledge": "workspace:*",
+    "@rxwf/model-catalog": "workspace:*",
+    "@rxwf/node-runner": "workspace:*",
+    "@rxwf/providers-contracts": "workspace:*",
+    "@rxwf/providers-lite": "workspace:*",
+    "@rxwf/runner-protocol": "workspace:*",
+    "@rxwf/shared": "workspace:*",
+    "@rxwf/system-settings": "workspace:*",
+    "@rxwf/web-search": "workspace:*",
+    "@rxwf/workflow": "workspace:*",
+    "better-sqlite3": "^11.10.0",
+    "drizzle-orm": "^0.43.1",
+    "@fastify/multipart": "^9.0.3",
+    "@fastify/websocket": "^11.0.0",
+    "fastify": "^5.3.3"
+  },
+  "devDependencies": {
+    "@rxwf/skill-runtime": "workspace:*",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4",
+    "ws": "^8.18.0"
+  }
+}

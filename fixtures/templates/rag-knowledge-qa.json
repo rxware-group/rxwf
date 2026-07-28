@@ -1,0 +1,39 @@
+{
+  "description": "手动提问 → RAG 检索并生成带引用的回答（需在 ragAnswer 节点填写 knowledgeBaseIds）",
+  "schemaVersion": 1,
+  "name": "RAG 知识库问答",
+  "nodes": [
+    {
+      "id": "m1",
+      "type": "manualtrigger",
+      "name": "手动触发",
+      "position": { "x": 0, "y": 0 },
+      "parameters": {}
+    },
+    {
+      "id": "set1",
+      "type": "set",
+      "name": "设置问题",
+      "position": { "x": 220, "y": 0 },
+      "parameters": {
+        "values": [{ "name": "query", "value": "在此编辑你的问题" }]
+      }
+    },
+    {
+      "id": "rag1",
+      "type": "ragAnswer",
+      "name": "RAG 回答",
+      "position": { "x": 460, "y": 0 },
+      "parameters": {
+        "knowledgeBaseIds": [],
+        "query": "={{ $json.query }}",
+        "ragTemplate": "support",
+        "fallbackToChat": false
+      }
+    }
+  ],
+  "connections": [
+    { "from": "m1", "to": "set1" },
+    { "from": "set1", "to": "rag1" }
+  ]
+}
