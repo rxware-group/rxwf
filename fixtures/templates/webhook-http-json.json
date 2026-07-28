@@ -1,0 +1,22 @@
+{
+  "description": "Webhook 接收 JSON 后转发 HTTP 请求",
+  "schemaVersion": 1,
+  "name": "Webhook → HTTP",
+  "nodes": [
+    {
+      "id": "wh1",
+      "type": "webhookTrigger",
+      "name": "Webhook",
+      "position": { "x": 0, "y": 0 },
+      "parameters": { "path": "incoming", "hmacSecret": "change-me-in-editor" }
+    },
+    {
+      "id": "http1",
+      "type": "httpRequest",
+      "name": "Forward",
+      "position": { "x": 280, "y": 0 },
+      "parameters": { "method": "POST", "url": "https://httpbin.org/post" }
+    }
+  ],
+  "connections": [{ "from": "wh1", "to": "http1" }]
+}

@@ -1,0 +1,44 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile
+    ports:
+      - "8787:8787"
+    environment:
+      RXWF_DEPLOY_PROFILE: standard
+      RXWF_DATABASE_URL: postgres://rxwf:rxwf@postgres:5432/rxwf
+      RXWF_REDIS_URL: redis://:rxwf@redis:6379/0
+      RXWF_FEATURE_PLUS: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: rxwf
+      POSTGRES_PASSWORD: rxwf
+      POSTGRES_DB: rxwf
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rxwf"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${RXWF_REDIS_PASSWORD:-rxwf}
+    environment:
+      RXWF_REDIS_PASSWORD: ${RXWF_REDIS_PASSWORD:-rxwf}
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${RXWF_REDIS_PASSWORD:-rxwf}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

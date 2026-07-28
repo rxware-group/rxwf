@@ -1,0 +1,122 @@
+ (当前)
+>浏览模板画廊</Link> · <Link to=
+Agent 可调用的 HTTP 请求工具。
+Agent 可调用的 MCP 工具。
+Agent 步骤
+Crew (层级)
+Crew (顺序)
+Crew 工人
+Crew 成员
+Crew 经理
+HTTP 方法
+JSON 表达式
+Markdown 内容
+Prompt 类型
+RAG 检索
+RAG 问答
+Supervisor 时间线
+Supervisor 模型
+Tool 描述
+Tools Agent：连接 Chat Model、Memory 与 Tool；可作为 Crew 成员。
+User 模板
+define 模式
+echo 或使用环境变量 RXWF_JSON
+https://api.example.com 或 {{ $env.API_URL }}/path
+{ "id": "{{ $json.id }}" } 或 ={{ $json }}
+○ 离线
+● 在线
+◐ 排水
+从知识库检索相关片段（不调用 LLM）。
+便签
+假
+允许并行委派
+允许并行批次
+决策
+出口数量
+加载工具…
+协调者
+合并多个上游分支的输出，供后续节点继续处理。
+合并模式
+向上游输出的每条数据发起 HTTP 请求，并将响应写入输出。
+命令
+在服务器上执行 Shell 命令；每条输入可通过环境变量 RXWF_JSON 读取对应 JSON。
+在沙箱中运行 JavaScript（jsCode），可用 items、$env、$node 访问上游数据并 return 结果。
+失败
+子工作流 ID
+字段
+完成
+将另一条工作流作为 Agent 工具同步执行。
+将输入分批处理（Plus）。
+层级 Crew 时间线
+工人
+工作目录（可选）
+已停用
+待接受邀请
+成功
+手动触发工作流，用于调试或一次性运行。
+执行 SQL 查询（Plus）。
+执行中
+执行中…
+执行步骤
+批次大小
+按 {{ }} 条件表达式分流：满足条件的条目走 true 出口，其余走 false。
+按画布顺序依次运行多个 AI Agent 角色，上一角色输出传给下一角色。
+按计划定时触发工作流（如 Cron 表达式）。
+操作
+无命中回退纯对话
+无法连接 API（http://localhost:8787）。请在项目根目录执行 pnpm dev 同时启动前后端。
+暂停执行指定时间后再将数据传递给下游。
+最大委派轮次
+最大监督步数
+最大迭代
+最终输出
+未命名
+未知决策
+条件表达式
+查询
+根据规则将输入条目分发到多个出口之一。
+检索知识库并生成带引用的回答。
+模式
+模板
+活跃
+流式 LLM 输出（Plus）。
+画布注释（Markdown），不参与执行。
+留空则使用设置中的默认模型
+留空则取输入项 json.query
+监督者每步动态选择工人（可重复调用），支持并行批次。
+目标 (Crew)
+直接创建
+真
+知识库 ID（逗号分隔）
+研究员
+空便签
+等待 (ms)
+经理
+经理 (可选)
+经理 Agent 动态委派工人 Agent，完成后汇总答案。
+背景 (Crew)
+自定义或未注册的节点类型。
+节点名
+角色 (Crew)
+解析、转换或生成 JSON 结构。
+设置或覆盖字段值，常用于整理、映射上游 JSON 数据。
+请先选择 MCP Server
+读写文件（Plus）。
+调用另一个工作流作为子流程，并传递当前数据。
+调用已注册的 MCP Server 工具（Plus）。
+调用本地 Ollama 模型（Plus）。
+超时 (ms)
+跨执行的会话记忆（sessionId）。
+路径
+输入
+输入数量
+输出
+连接到 Agent 的语言模型（Ollama / OpenAI 兼容）。
+连接知识库，将检索片段注入 Agent 系统提示。
+选择工具…
+通过 HTTP 请求触发，将请求体作为下游节点的输入数据。
+邀请
+问题
+顺序 Crew 时间线
+默认出口索引
+（未设置）

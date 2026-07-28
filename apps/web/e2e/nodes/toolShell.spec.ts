@@ -1,0 +1,220 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { test, expect } from '@playwright/test';
+
+/** E2E-N-toolShell — toolShell 执行与面板 (M-3 / plus matrix) */
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+const auditRowPath = path.join(repoRoot, 'docs/test/node-audit-rows/toolShell.md');
+const SPEC_FILE = 'nodes/toolShell.spec.ts';
+
+type WorkflowDefinition = {
+  schemaVersion: number;
+  name: string;
+  settings?: { workflowKind?: string };
+  nodes: Array<{
+    id: string;
+    type: string;
+    name: string;
+    position: { x: number; y: number };
+    parameters: Record<string, unknown>;
+  }>;
+  connections: Array<{
+    from: string;
+    to: string;
+    fromOutput?: string;
+    toInput?: string;
+  }>;
+};
+
+type DebugNodeResponse = {
+  status: string;
+  nodeResults?: Record<
+    string,
+    {
+      status: string;
+      outputItems?: Array<Array<{ json: Record<string, unknown> }>>;
+      errorCode?: string;
+      errorMessage?: string;
+    }
+  >;
+};
+
+function readAuditRowField(field: string): string {
+  const content = readFileSync(auditRowPath, 'utf8');
+  const match = content.match(
+    new RegExp(`\\|\\s*${field}\\s*\\|\\s*([^|]+?)\\s*\\|`, 'i'),
+  );
+  if (!match) {
+    throw new Error(`audit row field "${field}" missing from ${auditRowPath}`);
+  }
+  return match[1]!.trim();
+}
+
+function uniqueWorkflowName(base: string): string {
+  return `${base} ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+async function createWorkflow(
+  request: import('@playwright/test').APIRequestContext,
+  definition: WorkflowDefinition,
+) {
+  const name = uniqueWorkflowName(definition.name);
+  const res = await request.post('/api/workflows', {
+    data: { name, definition: { ...definition, name } },
+  });
+  if (!res.ok()) {
+    const body = await res.text();
+    throw new Error(`createWorkflow failed (${res.status()}): ${body}`);
+  }
+  const body = (await res.json()) as { id: string };
+  return body.id;
+}
+
+function toolShellPanelDefinition(): WorkflowDefinition {
+  return {
+    schemaVersion: 1,
+    name: 'Tool Shell panel E2E',
+    settings: { workflowKind: 'agent' },
+    nodes: [
+      {
+        id: 'agt',
+        type: 'aiAgent',
+        name: 'Agent',
+        position: { x: 240, y: 0 },
+        parameters: { prompt: 'Run a command' },
+      },
+      {
+        id: 'mdl',
+        type: 'aiChatModel',
+        name: 'Model',
+        position: { x: 0, y: 120 },
+        parameters: { provider: 'ollama', model: 'llama3' },
+      },
+      {
+        id: 'shell',
+        type: 'toolShell',
+        name: 'Shell Tool',
+        position: { x: 480, y: 120 },
+        parameters: { cwd: '.' },
+      },
+    ],
+    connections: [
+      {
+        from: 'mdl',
+        to: 'agt',
+        fromOutput: 'ai_languageModel',
+        toInput: 'ai_languageModel',
+      },
+      {
+        from: 'shell',
+        to: 'agt',
+        fromOutput: 'ai_tool',
+        toInput: 'ai_tool',
+      },
+    ],
+  };
+}
+
+async function debugAiAgentNode(
+  request: import('@playwright/test').APIRequestContext,
+  workflowId: string,
+  definition: WorkflowDefinition,
+  nodeId: string,
+): Promise<DebugNodeResponse> {
+  const res = await request.post('/api/workflows/debug-node', {
+    data: {
+      workflowId,
+      definition,
+      targetNodeId: nodeId,
+      environment: 'test',
+    },
+  });
+  expect(res.ok()).toBeTruthy();
+  return (await res.json()) as DebugNodeResponse;
+}
+
+test.describe('toolShell audit row', () => {
+  test('AUDIT-N-toolShell row documents ok conclusions', () => {
+    expect(readAuditRowField('panel')).toBe('ok');
+    expect(readAuditRowField('validation')).toBe('ok');
+    expect(readAuditRowField('executor')).toBe('satellite');
+    expect(readAuditRowField('status')).toBe('ok');
+    expect(readAuditRowField('e2e_spec')).toBe(SPEC_FILE);
+  });
+});
+
+test.describe('toolShell E2E-N-toolShell @any', () => {
+  test('Tool Shell panel shows tool description and cwd fields', async ({ page, request }) => {
+    const definition = toolShellPanelDefinition();
+    const workflowId = await createWorkflow(request, definition);
+    await page.goto(`/workflows/${workflowId}`);
+
+    const canvas = page.locator('.react-flow');
+    await expect(canvas).toBeVisible();
+    await canvas
+      .locator('.workflow-node-caption-title')
+      .filter({ hasText: /^Shell Tool$/ })
+      .dblclick();
+
+    const modal = page.locator('.node-editor-modal');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('.rxwf-form-field-label', { hasText: 'Tool 描述' })).toBeVisible();
+    await expect(modal.locator('.node-builtin-tool-description-agent')).toContainText(
+      /Shell|命令/,
+    );
+    await expect(modal.locator('.rxwf-form-field-label', { hasText: '工作目录' })).toBeVisible();
+  });
+});
+
+test.describe('toolShell E2E-N-toolShell @plus', () => {
+  test('debug-node aiAgent with toolShell satellite fails without Chat Model', async ({
+    request,
+  }) => {
+    const definition: WorkflowDefinition = {
+      schemaVersion: 1,
+      name: 'Tool Shell no model E2E',
+      settings: { workflowKind: 'agent' },
+      nodes: [
+        {
+          id: 'tr',
+          type: 'manualTrigger',
+          name: 'Manual',
+          position: { x: 0, y: 0 },
+          parameters: {},
+        },
+        {
+          id: 'agt',
+          type: 'aiAgent',
+          name: 'Agent',
+          position: { x: 240, y: 0 },
+          parameters: { prompt: 'hello' },
+        },
+        {
+          id: 'shell',
+          type: 'toolShell',
+          name: 'Shell Tool',
+          position: { x: 480, y: 120 },
+          parameters: {},
+        },
+      ],
+      connections: [
+        { from: 'tr', to: 'agt' },
+        {
+          from: 'shell',
+          to: 'agt',
+          fromOutput: 'ai_tool',
+          toInput: 'ai_tool',
+        },
+      ],
+    };
+
+    const workflowId = await createWorkflow(request, definition);
+    const result = await debugAiAgentNode(request, workflowId, definition, 'agt');
+
+    expect(result.status).toBe('failed');
+    expect(result.nodeResults?.agt?.status).toBe('failed');
+    expect(result.nodeResults?.agt?.errorCode).toBe('E3010');
+  });
+});

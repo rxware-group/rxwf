@@ -1,0 +1,2158 @@
+openapi: 3.1.0
+info:
+  title: RX-Workflow API
+  version: 1.0.0-core
+  description: |
+    v1.0-core 公开 REST 契约（与 [spec.md](./spec.md) v1.11 对齐）。
+    - Runner API：v1.0-core 仅 `GET /runners`；v1.1 注册/WebSocket/排水等见 `x-rxwf-release: v1.1`（设计 [runner-v1.1-websocket-design.md](./superpowers/specs/2026-05-29-runner-v1.1-websocket-design.md)）。
+    - v1.1 远程 Runner 需 **API 单实例**（`replicas: 1`）；多副本路由见 v1.2。
+    - 生产 Webhook 入站为 HTTP POST（见各工作流 Webhook URL），不在本文件重复路径。
+    - MCP HTTP tools（FR-16 / AC-13）在根路径 `/mcp/*`（见第二 server）；MCP JSON-RPC 协议本身不在本文件。
+    - v1.0-plus 端点（Chat、Admin i18n/theme 扩展）在 `x-rxwf-release: plus` 标注。
+  contact:
+    name: RX-Workflow
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8787/api
+    description: Lite 默认（RXWF_HTTP_PORT，与 n8n 5678 区分）
+  - url: https://{host}/api
+    variables:
+      host:
+        default: workflow.example.com
+  - url: http://localhost:8787
+    description: 根路径（MCP HTTP tools）
+  - url: https://{host}
+    variables:
+      host:
+        default: workflow.example.com
+
+tags:
+  - name: System
+  - name: Auth
+  - name: Setup
+  - name: Workflows
+  - name: Executions
+  - name: Environment
+  - name: Templates
+  - name: Credentials
+  - name: UserPreferences
+  - name: i18n
+  - name: Themes
+  - name: Chat
+    description: v1.0-plus
+  - name: Admin
+    description: v1.0-plus
+  - name: McpServers
+    description: v1.0-plus MCP Client 注册
+  - name: McpTokens
+    description: v1.0-plus MCP Access Token
+  - name: Plugins
+    description: v1.0-plus
+  - name: Runners
+    description: 跨平台 Node Runner（FR-23），见 adr-node-runner.md
+
+security:
+  - sessionCookie: []
+  - apiKey: []
+
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: 存活探针
+      security: []
+      responses:
+        '200':
+          description: OK
+
+  /ready:
+    get:
+      tags: [System]
+      summary: 就绪探针（含 DB/队列）
+      security: []
+      responses:
+        '200':
+          description: Ready
+        '503':
+          description: Not ready
+
+  /system/features:
+    get:
+      tags: [System]
+      summary: 部署特性
+      security: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SystemFeatures' }
+
+  /setup/checklist:
+    get:
+      tags: [Setup]
+      summary: 首启安装 checklist（AC-35/39）
+      security: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SetupChecklist' }
+
+  /auth/status:
+    get:
+      tags: [Auth]
+      summary: 认证与首启状态
+      security: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthStatus' }
+
+  /auth/setup:
+    post:
+      tags: [Auth]
+      summary: 首次创建管理员（仅无用户时）
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthCredentials' }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthUserResponse' }
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: 邮箱密码登录（Session Cookie）
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthCredentials' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthUserResponse' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: 登出（清除 Session Cookie）
+      security: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+
+  /i18n/catalog-version:
+    get:
+      tags: [i18n]
+      summary: 语言目录版本号（缓存失效）
+      security: []
+      responses:
+        '200':
+          description: revision
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revision: { type: integer }
+
+  /i18n/locales:
+    get:
+      tags: [i18n]
+      summary: 已启用语言列表
+      security: []
+      responses:
+        '200':
+          description: Locale catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Locale' }
+
+  /i18n/locales/{code}:
+    get:
+      tags: [i18n]
+      summary: 单语言元数据
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/localeCode'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Locale' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /i18n/bundles/{locale}/{namespace}:
+    get:
+      tags: [i18n]
+      summary: 文案 bundle（builtin + 覆盖合并）
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/localeCode'
+        - name: namespace
+          in: path
+          required: true
+          schema: { type: string, example: common }
+      responses:
+        '200':
+          headers:
+            ETag:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /themes/catalog-version:
+    get:
+      tags: [Themes]
+      summary: 主题目录版本号
+      security: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revision: { type: integer }
+
+  /themes:
+    get:
+      tags: [Themes]
+      summary: 已启用主题列表
+      security: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ThemeSummary' }
+
+  /themes/{themeId}:
+    get:
+      tags: [Themes]
+      summary: 主题元数据
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/themeId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ThemeSummary' }
+
+  /themes/{themeId}/tokens:
+    get:
+      tags: [Themes]
+      summary: 主题 Design Token（CSS 变量 JSON）
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/themeId'
+      responses:
+        '200':
+          headers:
+            ETag:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ThemeTokens' }
+            text/css:
+              schema: { type: string }
+
+  /users/me/preferences:
+    get:
+      tags: [UserPreferences]
+      summary: 当前用户语言/主题偏好
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserPreferences' }
+    patch:
+      tags: [UserPreferences]
+      summary: 更新偏好
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserPreferencesPatch' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserPreferences' }
+
+  /workflows:
+    get:
+      tags: [Workflows]
+      summary: 工作流列表
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 200 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+        - name: active
+          in: query
+          schema: { type: boolean }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/WorkflowSummary' }
+                  total: { type: integer }
+    post:
+      tags: [Workflows]
+      summary: 创建工作流
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkflowDefinition' }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkflowDetail' }
+
+  /workflows/{workflowId}:
+    get:
+      tags: [Workflows]
+      summary: 获取工作流定义
+      parameters:
+        - $ref: '#/components/parameters/workflowId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkflowDetail' }
+    put:
+      tags: [Workflows]
+      summary: 更新工作流（递增版本）
+      parameters:
+        - $ref: '#/components/parameters/workflowId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkflowDefinition' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkflowDetail' }
+    delete:
+      tags: [Workflows]
+      summary: 删除工作流
+      parameters:
+        - $ref: '#/components/parameters/workflowId'
+      responses:
+        '204':
+          description: Deleted
+
+  /workflows/{workflowId}/validate:
+    post:
+      tags: [Workflows]
+      summary: 静态校验（Schema、环路、表达式）
+      parameters:
+        - $ref: '#/components/parameters/workflowId'
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkflowDefinition' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValidationResult' }
+
+  /workflows/{workflowId}/active:
+    patch:
+      tags: [Workflows]
+      summary: 设置 Active 开关（危险操作，需二次确认由 UI 完成）
+      parameters:
+        - $ref: '#/components/parameters/workflowId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [active]
+              properties:
+                active: { type: boolean }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkflowSummary' }
+
+  /workflows/{workflowId}/versions:
+    get:
+      tags: [Workflows]
+      summary: 版本历史列表
+      parameters:
+        - $ref: '#/components/parameters/workflowId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  versions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        version: { type: integer }
+                        createdAt: { type: string, format: date-time }
+
+  /workflows/{workflowId}/versions/{version}:
+    get:
+      tags: [Workflows]
+      summary: 读取指定版本定义快照
+      parameters:
+        - $ref: '#/components/parameters/workflowId'
+        - name: version
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version: { type: integer }
+                  definition: { $ref: '#/components/schemas/WorkflowDefinition' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /workflows/{workflowId}/rollback:
+    post:
+      tags: [Workflows]
+      summary: 回滚到历史版本（不影响运行中 execution）
+      parameters:
+        - $ref: '#/components/parameters/workflowId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                version: { type: integer }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkflowDetail' }
+
+  /workflows/debug-node:
+    post:
+      tags: [Workflows]
+      summary: 调试执行单个节点（AC-10）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DebugNodeRequest' }
+      responses:
+        '200':
+          description: 节点输出分支
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /templates:
+    get:
+      tags: [Templates]
+      summary: 内置模板目录（FR-7）
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items: { $ref: '#/components/schemas/TemplateSummary' }
+
+  /templates/{templateId}/clone:
+    post:
+      tags: [Templates]
+      summary: 从模板克隆为新工作流草稿
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /workflows/{workflowId}/export:
+    get:
+      tags: [Workflows]
+      summary: 导出 JSON（凭证占位符）
+      parameters:
+        - $ref: '#/components/parameters/workflowId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkflowDefinition' }
+
+  /workflows/import:
+    post:
+      tags: [Workflows]
+      summary: 导入工作流 JSON
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkflowDefinition' }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkflowDetail' }
+
+  /workflows/{workflowId}/executions:
+    get:
+      tags: [Executions]
+      summary: 执行历史（分页）
+      parameters:
+        - $ref: '#/components/parameters/workflowId'
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 200 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [queued, running, success, failed, cancelled]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ExecutionSummary' }
+                  total: { type: integer }
+    post:
+      tags: [Executions]
+      summary: 触发执行（手动/API）
+      parameters:
+        - $ref: '#/components/parameters/workflowId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExecutionTriggerRequest' }
+      responses:
+        '202':
+          description: 已入队
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExecutionDetail' }
+        '200':
+          description: 幂等命中，返回已有 execution
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExecutionDetail' }
+
+  /executions:
+    get:
+      tags: [Executions]
+      summary: 全局执行历史（分页）
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 200 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [queued, running, success, failed, cancelled]
+        - name: workflowId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExecutionListPage' }
+
+  /executions/{executionId}:
+    get:
+      tags: [Executions]
+      summary: 执行详情（含时间线摘要）
+      parameters:
+        - $ref: '#/components/parameters/executionId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExecutionDetail' }
+
+  /executions/{executionId}/stop:
+    post:
+      tags: [Executions]
+      summary: 停止运行中实例
+      parameters:
+        - $ref: '#/components/parameters/executionId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExecutionDetail' }
+
+  /executions/{executionId}/node-runs/{nodeRunId}/io:
+    get:
+      tags: [Executions]
+      summary: 节点 I/O（大 payload 可能为 blob 引用）
+      parameters:
+        - $ref: '#/components/parameters/executionId'
+        - name: nodeRunId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NodeIo' }
+
+  /env:
+    get:
+      tags: [Environment]
+      summary: 列出环境变量（AC-6）
+      parameters:
+        - name: scope
+          in: query
+          required: true
+          schema: { type: string, enum: [global, user, workflow] }
+        - name: scopeId
+          in: query
+          schema: { type: string }
+        - name: environment
+          in: query
+          required: true
+          schema: { type: string, enum: [dev, staging, prod] }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/EnvVarItem' }
+    put:
+      tags: [Environment]
+      summary: 批量 upsert 环境变量
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EnvUpsertRequest' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/EnvVarItem' }
+
+  /env/{id}:
+    delete:
+      tags: [Environment]
+      summary: 按 id 删除环境变量
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204':
+          description: Deleted
+
+  /credentials:
+    get:
+      tags: [Credentials]
+      summary: 凭证列表（不含密钥）
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CredentialSummary' }
+    post:
+      tags: [Credentials]
+      summary: 创建凭证
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CredentialCreate' }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CredentialSummary' }
+
+  /credentials/{credentialId}:
+    delete:
+      tags: [Credentials]
+      summary: 删除凭证
+      parameters:
+        - name: credentialId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /credentials/{credentialId}/test:
+    post:
+      tags: [Credentials]
+      summary: 测试连通性
+      parameters:
+        - name: credentialId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  message: { type: string }
+
+  # --- v1.0-plus ---
+  /chat/sessions:
+    get:
+      tags: [Chat]
+      summary: 列出 Chat 会话
+      x-rxwf-release: plus
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items: { $ref: '#/components/schemas/ChatSession' }
+    post:
+      tags: [Chat]
+      summary: 创建 Chat 会话
+      x-rxwf-release: plus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChatSession' }
+
+  /chat/sessions/{sessionId}/messages:
+    get:
+      tags: [Chat]
+      summary: 会话消息列表
+      x-rxwf-release: plus
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items: { type: object }
+
+  /chat/sessions/{sessionId}/messages/{messageId}/regenerate:
+    post:
+      tags: [Chat]
+      summary: 重新生成助手回复（SSE）
+      x-rxwf-release: plus
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: messageId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode: { type: string, enum: [chat, rag] }
+                modelId: { type: string }
+                fallbackToChat: { type: boolean }
+      responses:
+        '200':
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /chat/sessions/{sessionId}/stream:
+    post:
+      tags: [Chat]
+      summary: 流式回复（SSE）
+      x-rxwf-release: plus
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content: { type: string }
+      responses:
+        '200':
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: |
+                  SSE lines `data: {json}`. Events: token, done, error, aborted.
+
+  /knowledge-bases:
+    get:
+      tags: [Knowledge]
+      summary: 列出知识库
+      x-rxwf-release: plus
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { type: object }
+
+  /chat-bots:
+    get:
+      tags: [ChatBots]
+      summary: 列出 Chat Bot
+      x-rxwf-release: plus
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { type: object }
+    post:
+      tags: [ChatBots]
+      summary: 创建 Chat Bot
+      x-rxwf-release: plus
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { type: object }
+
+  /chat-bots/{id}:
+    get:
+      tags: [ChatBots]
+      summary: Bot 详情与草稿
+      x-rxwf-release: plus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { type: object }
+    patch:
+      tags: [ChatBots]
+      summary: 更新 Bot / 草稿配置
+      x-rxwf-release: plus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { type: object }
+
+  /chat-bots/{id}/publish:
+    post:
+      tags: [ChatBots]
+      summary: 发布 Bot
+      x-rxwf-release: plus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { type: object }
+
+  /chat-bots/{id}/api-keys:
+    get:
+      tags: [ChatBots]
+      summary: 列出 Bot API Keys
+      x-rxwf-release: plus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { type: object }
+    post:
+      tags: [ChatBots]
+      summary: 创建 Bot API Key
+      x-rxwf-release: plus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { type: object }
+
+  /public/chat/{slug}/session:
+    post:
+      tags: [PublicChat]
+      summary: 创建公开 Embed 会话
+      x-rxwf-release: plus
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { type: object }
+
+  /public/chat/sessions/{sessionId}/stream:
+    post:
+      tags: [PublicChat]
+      summary: 公开会话流式回复
+      x-rxwf-release: plus
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: text/event-stream
+
+  /public/chat/bots/{slug}/chat:
+    post:
+      tags: [PublicChat]
+      summary: Bot API Key 非流式对话
+      x-rxwf-release: plus
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { type: object }
+
+  /mcp-servers:
+    get:
+      tags: [McpServers]
+      summary: MCP Client 已注册服务器列表
+      x-rxwf-release: plus
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  servers:
+                    type: array
+                    items: { $ref: '#/components/schemas/McpServer' }
+    post:
+      tags: [McpServers]
+      summary: 注册 MCP 服务器
+      x-rxwf-release: plus
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/McpServerCreate' }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/McpServer' }
+
+  /mcp-servers/{id}:
+    put:
+      tags: [McpServers]
+      summary: 更新 MCP 服务器
+      x-rxwf-release: plus
+      parameters:
+        - $ref: '#/components/parameters/mcpServerId'
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/McpServerCreate' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/McpServer' }
+    delete:
+      tags: [McpServers]
+      summary: 删除 MCP 服务器
+      x-rxwf-release: plus
+      parameters:
+        - $ref: '#/components/parameters/mcpServerId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+
+  /mcp-servers/{id}/test:
+    post:
+      tags: [McpServers]
+      summary: 测试 MCP 连接
+      x-rxwf-release: plus
+      parameters:
+        - $ref: '#/components/parameters/mcpServerId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+
+  /mcp-servers/{id}/tools:
+    get:
+      tags: [McpServers]
+      summary: 列出 MCP 工具名（供 mcpClient 节点选择）
+      x-rxwf-release: plus
+      parameters:
+        - $ref: '#/components/parameters/mcpServerId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tools:
+                    type: array
+                    items: { type: string }
+
+  /plugins:
+    get:
+      tags: [Plugins]
+      summary: 已安装插件列表
+      x-rxwf-release: plus
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plugins:
+                    type: array
+                    items: { $ref: '#/components/schemas/PluginSummary' }
+
+  /plugins/register:
+    post:
+      tags: [Plugins]
+      summary: 注册已签名插件 manifest
+      x-rxwf-release: plus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [manifest, signature]
+              properties:
+                manifest: { type: string }
+                signature: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  id: { type: string }
+                  type: { type: string }
+
+  /plugins/{id}/enable:
+    post:
+      tags: [Plugins]
+      summary: 启用插件
+      x-rxwf-release: plus
+      parameters:
+        - $ref: '#/components/parameters/pluginId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  enabled: { type: boolean }
+
+  /plugins/{id}/disable:
+    post:
+      tags: [Plugins]
+      summary: 禁用插件
+      x-rxwf-release: plus
+      parameters:
+        - $ref: '#/components/parameters/pluginId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  enabled: { type: boolean }
+
+  /mcp-tokens:
+    get:
+      tags: [McpTokens]
+      summary: MCP Access Token 列表
+      x-rxwf-release: plus
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tokens:
+                    type: array
+                    items: { $ref: '#/components/schemas/McpTokenSummary' }
+    post:
+      tags: [McpTokens]
+      summary: 创建 MCP Token（返回 mcp.json 片段）
+      x-rxwf-release: plus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/McpTokenCreated' }
+
+  /mcp-tokens/{id}:
+    delete:
+      tags: [McpTokens]
+      summary: 吊销 MCP Token
+      x-rxwf-release: plus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+
+  /admin/i18n/locales:
+    get:
+      tags: [Admin]
+      summary: 语言管理列表（规划）
+      x-rxwf-release: plus
+      x-rxwf-status: planned
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Admin]
+      summary: 注册语言（规划）
+      x-rxwf-release: plus
+      x-rxwf-status: planned
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Locale' }
+      responses:
+        '201':
+          description: Created
+
+  /admin/i18n/{locale}:
+    put:
+      tags: [Admin]
+      summary: 覆盖语言文案 bundle（AC-40）
+      x-rxwf-release: plus
+      parameters:
+        - name: locale
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: object
+                  additionalProperties: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  locale: { type: string }
+
+  /admin/themes:
+    post:
+      tags: [Admin]
+      summary: 创建自定义主题（规划）
+      x-rxwf-release: plus
+      x-rxwf-status: planned
+      responses:
+        '201':
+          description: Created
+
+  /admin/themes/{theme}:
+    put:
+      tags: [Admin]
+      summary: 覆盖主题 design tokens（AC-40）
+      x-rxwf-release: plus
+      parameters:
+        - name: theme
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tokens:
+                  type: object
+                  additionalProperties: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  theme: { type: string }
+
+  /webhook/{workflowId}/{webhookPath}:
+    post:
+      tags: [Executions]
+      summary: Webhook 生产入站（TriggerIngress）
+      description: |
+        需 Header `X-AWF-Signature`、`X-AWF-Timestamp`；可选 `Idempotency-Key`。
+        实际 path 以工作流 Webhook 节点配置为准。
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/workflowId'
+        - name: webhookPath
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '202':
+          description: Accepted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /runners:
+    get:
+      tags: [Runners]
+      summary: Runner 列表（含 Embedded）
+      description: |
+        返回已注册 Runner，含 **platform**（os/arch）、`labels`、`agentVersion`、`lastHeartbeatAt`、在线状态与负载。
+        v1.0-core 只读；外部 Agent 注册见 v1.1 端点。
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [runners]
+                properties:
+                  runners:
+                    type: array
+                    items: { $ref: '#/components/schemas/RunnerSummary' }
+
+  /runners/registration-tokens:
+    post:
+      tags: [Runners]
+      summary: 创建 Runner 预注册 Token（Admin）
+      x-rxwf-release: v1.1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                expiresInHours: { type: integer, default: 24, minimum: 1, maximum: 168 }
+                labels: { type: array, items: { type: string } }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [registrationToken, expiresAt]
+                properties:
+                  registrationToken: { type: string }
+                  expiresAt: { type: string, format: date-time }
+
+  /runners/register:
+    post:
+      tags: [Runners]
+      summary: Runner Agent 注册
+      x-rxwf-release: v1.1
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RunnerRegisterRequest' }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RunnerRegisterResponse' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /runners/{runnerId}/heartbeat:
+    post:
+      tags: [Runners]
+      summary: Runner 心跳（已弃用）
+      description: |
+        **Deprecated（v1.1）**：Agent 应通过 WebSocket `presence` / `pong` 维持在线；本端点仅兼容旧客户端。
+      deprecated: true
+      x-rxwf-release: v1.1
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/runnerId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                runningJobs: { type: integer, minimum: 0 }
+                agentVersion: { type: string }
+      responses:
+        '204':
+          description: OK
+
+  /runners/{runnerId}/stream:
+    get:
+      tags: [Runners]
+      summary: Runner Agent WebSocket 任务通道
+      description: |
+        v1.1 Agent 长连接：`ws`/`wss` 升级后首条消息须为 `auth`（`runnerCredential`），成功返回 `auth.ok`。
+        服务端经此通道下发 `job.assign`；Agent 回 `job.result` / `job.failed`；周期性 `presence` 更新 `lastHeartbeatAt`。
+        同一 `runnerId` 仅允许单活连接（新连接踢掉旧连接）。
+      x-rxwf-release: v1.1
+      parameters:
+        - $ref: '#/components/parameters/runnerId'
+      responses:
+        '101':
+          description: Switching Protocols（WebSocket）
+
+  /runners/{runnerId}:
+    delete:
+      tags: [Runners]
+      summary: 吊销 Runner
+      x-rxwf-release: v1.1
+      parameters:
+        - $ref: '#/components/parameters/runnerId'
+      responses:
+        '204':
+          description: Deleted
+
+  /runners/{runnerId}/drain:
+    post:
+      tags: [Runners]
+      summary: 排水（不接新任务）
+      x-rxwf-release: v1.1
+      parameters:
+        - $ref: '#/components/parameters/runnerId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RunnerSummary' }
+
+  /runners/{runnerId}/rotate-credential:
+    post:
+      tags: [Runners]
+      summary: 轮换 Runner 凭证
+      x-rxwf-release: v1.1
+      parameters:
+        - $ref: '#/components/parameters/runnerId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [runnerCredential]
+                properties:
+                  runnerCredential: { type: string }
+
+  /mcp/tools:
+    servers:
+      - url: http://localhost:8787
+      - url: https://{host}
+        variables:
+          host:
+            default: workflow.example.com
+    get:
+      tags: [McpTokens]
+      summary: MCP HTTP tools 目录（AC-13）
+      description: |
+        根路径 `/mcp/*`，需 `X-API-Key` 或 Session。
+        v1.0-core：`workflow_*`、`execution_*`、`workflow_validate`。
+        v1.1 新增：`runner_list`（等同 `GET /runners`）、`runner_create_registration_token`（Admin，等同 `POST /runners/registration-tokens`）。
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tools:
+                    type: array
+                    items: { type: object }
+
+  /mcp/tools/call:
+    servers:
+      - url: http://localhost:8787
+      - url: https://{host}
+        variables:
+          host:
+            default: workflow.example.com
+    post:
+      tags: [McpTokens]
+      summary: 调用 MCP HTTP tool
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                arguments: { type: object }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { type: object }
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: awf_session
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  parameters:
+    workflowId:
+      name: workflowId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    executionId:
+      name: executionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    localeCode:
+      name: code
+      in: path
+      required: true
+      schema: { type: string, example: zh-CN }
+    themeId:
+      name: themeId
+      in: path
+      required: true
+      schema: { type: string, example: dark }
+    idempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: { type: string, maxLength: 128 }
+    runnerId:
+      name: runnerId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    mcpServerId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    pluginId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorBody' }
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorBody' }
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorBody' }
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorBody' }
+
+  schemas:
+    ErrorBody:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, example: E2005 }
+        message: { type: string }
+        traceId: { type: string }
+        details: { type: object }
+
+    Locale:
+      type: object
+      properties:
+        code: { type: string }
+        nativeName: { type: string }
+        englishName: { type: string }
+        direction: { type: string, enum: [ltr, rtl] }
+        enabled: { type: boolean }
+        builtin: { type: boolean }
+        fallbackLocale: { type: string }
+        completeness: { type: number }
+
+    ThemeSummary:
+      type: object
+      properties:
+        themeId: { type: string }
+        name: { type: string }
+        builtin: { type: boolean }
+        enabled: { type: boolean }
+        extends: { type: string, enum: [dark, light] }
+        preview: { type: object }
+
+    ThemeTokens:
+      type: object
+      properties:
+        themeId: { type: string }
+        extends: { type: string }
+        tokens:
+          type: object
+          additionalProperties: { type: string }
+
+    UserPreferences:
+      type: object
+      properties:
+        locale: { type: string }
+        themePreference: { type: string, enum: [fixed, system] }
+        themeId: { type: string }
+
+    UserPreferencesPatch:
+      type: object
+      properties:
+        locale: { type: string }
+        themePreference: { type: string, enum: [fixed, system] }
+        themeId: { type: string }
+
+    RunnerOs:
+      type: string
+      enum: [windows, linux, macos]
+
+    RunnerArch:
+      type: string
+      enum: [x64, arm64, arm]
+
+    RunnerPlatform:
+      type: object
+      required: [os, arch]
+      properties:
+        os: { $ref: '#/components/schemas/RunnerOs' }
+        arch: { $ref: '#/components/schemas/RunnerArch' }
+        osVersion: { type: string, description: '如 Windows Server 2022、Ubuntu 22.04' }
+
+    RunnerPolicy:
+      type: object
+      description: |
+        工作流级 Runner 策略，见 [adr-node-runner.md](./adr-node-runner.md)。
+        未配置时继承全局默认 **Embedded**；节点 `runner.mode=inherit` 时继承本策略。
+      properties:
+        mode:
+          type: string
+          enum: [embedded, auto, pinned, label]
+          default: embedded
+        runnerId:
+          type: string
+          format: uuid
+          description: mode=pinned 时必填
+        platform: { $ref: '#/components/schemas/RunnerOs' }
+        labels:
+          type: array
+          items: { type: string }
+          maxItems: 16
+        fallback:
+          type: string
+          enum: [fail, embedded]
+          default: embedded
+
+    NodeRunnerOverride:
+      type: object
+      description: 节点级 Runner 覆盖（优先级高于工作流 `runnerPolicy`）
+      properties:
+        mode:
+          type: string
+          enum: [inherit, embedded, auto, pinned, label]
+          default: inherit
+        runnerId: { type: string, format: uuid }
+        platform: { $ref: '#/components/schemas/RunnerOs' }
+        labels:
+          type: array
+          items: { type: string }
+          maxItems: 16
+
+    WorkflowNode:
+      type: object
+      required: [id, type, name, position, parameters]
+      properties:
+        id: { type: string }
+        type: { type: string }
+        name: { type: string }
+        position:
+          type: object
+          properties:
+            x: { type: number }
+            y: { type: number }
+        parameters: { type: object }
+        disabled: { type: boolean }
+        runner: { $ref: '#/components/schemas/NodeRunnerOverride' }
+
+    WorkflowSettings:
+      type: object
+      properties:
+        timezone: { type: string }
+        timeoutSeconds: { type: integer, minimum: 1 }
+        errorWorkflowId: { type: string, format: uuid }
+        maxConcurrentInstances: { type: integer, minimum: 1 }
+        runnerPolicy: { $ref: '#/components/schemas/RunnerPolicy' }
+        runnerQueueTimeoutMs:
+          type: integer
+          description: v1.1 Standard 排队超时（毫秒），默认 300000
+          x-rxwf-release: v1.1
+
+    WorkflowDefinition:
+      type: object
+      required: [schemaVersion, name, nodes, connections]
+      properties:
+        schemaVersion: { type: integer, const: 1 }
+        name: { type: string }
+        active: { type: boolean }
+        settings: { $ref: '#/components/schemas/WorkflowSettings' }
+        nodes:
+          type: array
+          maxItems: 200
+          items: { $ref: '#/components/schemas/WorkflowNode' }
+        connections: { type: array, items: { type: object } }
+        pinData: { type: object }
+
+    RunnerSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        kind: { type: string, enum: [embedded, agent] }
+        platform: { $ref: '#/components/schemas/RunnerPlatform' }
+        labels: { type: array, items: { type: string } }
+        capabilities: { type: array, items: { type: string } }
+        status: { type: string, enum: [online, offline, draining] }
+        maxConcurrent: { type: integer }
+        runningJobs: { type: integer }
+        agentVersion: { type: string }
+        lastHeartbeatAt: { type: string, format: date-time }
+        registeredAt: { type: string, format: date-time }
+
+    RunnerRegisterRequest:
+      type: object
+      required: [registrationToken, name, platform]
+      properties:
+        registrationToken: { type: string }
+        name: { type: string, maxLength: 128 }
+        platform: { $ref: '#/components/schemas/RunnerPlatform' }
+        labels: { type: array, items: { type: string } }
+        capabilities: { type: array, items: { type: string } }
+        maxConcurrent: { type: integer, minimum: 1, default: 2 }
+        agentVersion: { type: string }
+
+    RunnerRegisterResponse:
+      type: object
+      required: [runnerId, runnerCredential]
+      properties:
+        runnerId: { type: string, format: uuid }
+        runnerCredential: { type: string, description: 仅返回一次 }
+
+    WorkflowSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        active: { type: boolean }
+        updatedAt: { type: string, format: date-time }
+
+    WorkflowDetail:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowSummary'
+        - type: object
+          properties:
+            definition: { $ref: '#/components/schemas/WorkflowDefinition' }
+            currentVersionId: { type: string, format: uuid }
+
+    WorkflowVersion:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer }
+        createdAt: { type: string, format: date-time }
+        createdBy: { type: string }
+
+    ValidationResult:
+      type: object
+      properties:
+        valid: { type: boolean }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code: { type: string }
+              message: { type: string }
+              nodeId: { type: string }
+
+    ExecutionTriggerRequest:
+      type: object
+      properties:
+        mode: { type: string, enum: [production, manual, partial], default: manual }
+        environment: { type: string, enum: [dev, staging, prod] }
+        inputItems: { type: array, items: { type: object } }
+        startNodeId: { type: string, description: partial 模式起始节点 }
+
+    ExecutionSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        workflowId: { type: string, format: uuid }
+        workflowVersionId: { type: string, format: uuid }
+        workflowName: { type: string }
+        status: { type: string }
+        mode: { type: string }
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: string, format: date-time }
+
+    ExecutionDetail:
+      allOf:
+        - $ref: '#/components/schemas/ExecutionSummary'
+        - type: object
+          properties:
+            traceId: { type: string }
+            definitionSnapshot: { $ref: '#/components/schemas/WorkflowDefinition' }
+            nodeRuns:
+              type: array
+              items:
+                type: object
+                properties:
+                  nodeId: { type: string }
+                  status: { type: string }
+                  durationMs: { type: integer }
+                  runnerId: { type: string, format: uuid }
+                  runnerPlatform: { $ref: '#/components/schemas/RunnerPlatform' }
+
+    NodeIo:
+      type: object
+      properties:
+        inputRef: { type: string }
+        outputRef: { type: string }
+        input: { type: array, items: { type: object } }
+        output: { type: array, items: { type: object } }
+
+    CredentialSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        type: { type: string }
+
+    CredentialCreate:
+      type: object
+      required: [name, type, data]
+      properties:
+        name: { type: string }
+        type: { type: string }
+        data: { type: object }
+        scope: { type: string, enum: [private, workspace, global] }
+
+    SystemFeatures:
+      type: object
+      properties:
+        deployProfile: { type: string, enum: [lite, standard] }
+        featurePlus: { type: boolean }
+        httpPort: { type: integer }
+        publicUrl: { type: string, format: uri }
+        version: { type: string }
+
+    SetupChecklist:
+      type: object
+      properties:
+        complete: { type: boolean }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              label: { type: string }
+              done: { type: boolean }
+
+    AuthStatus:
+      type: object
+      properties:
+        needsSetup: { type: boolean }
+        authenticated: { type: boolean }
+        user:
+          type: object
+          nullable: true
+          properties:
+            email: { type: string }
+            role: { type: string }
+
+    AuthCredentials:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+
+    AuthUserResponse:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            email: { type: string }
+            role: { type: string }
+
+    EnvVarItem:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        scope: { type: string, enum: [global, user, workflow] }
+        scopeId: { type: string, nullable: true }
+        environment: { type: string, enum: [dev, staging, prod] }
+        key: { type: string }
+        value: { type: string }
+        sensitive: { type: boolean }
+
+    EnvUpsertRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [scope, environment, key, value]
+            properties:
+              scope: { type: string, enum: [global, user, workflow] }
+              scopeId: { type: string, nullable: true }
+              environment: { type: string, enum: [dev, staging, prod] }
+              key: { type: string }
+              value: { type: string }
+              sensitive: { type: boolean }
+
+    TemplateSummary:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+
+    DebugNodeRequest:
+      type: object
+      required: [definition, targetNodeId]
+      properties:
+        definition: { $ref: '#/components/schemas/WorkflowDefinition' }
+        targetNodeId: { type: string }
+        pinData: { type: object }
+
+    ExecutionListPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ExecutionSummary' }
+        total: { type: integer }
+
+    ChatSession:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+
+    McpServer:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        transport: { type: string, enum: [npx, docker, http] }
+        command: { type: string }
+        args: { type: array, items: { type: string } }
+        url: { type: string, format: uri }
+        docker:
+          $ref: '#/components/schemas/McpDockerConfig'
+
+    McpDockerConfig:
+      type: object
+      properties:
+        image:
+          type: string
+          description: 可选；留空时使用顶层 command/args 调用 Docker CLI（如 mcp gateway run）
+        args: { type: array, items: { type: string } }
+        volumes: { type: array, items: { type: string } }
+        env:
+          type: object
+          additionalProperties: { type: string }
+        network: { type: string }
+
+    McpServerCreate:
+      type: object
+      required: [name, transport]
+      properties:
+        name: { type: string }
+        transport: { type: string, enum: [npx, docker, http] }
+        command: { type: string }
+        args: { type: array, items: { type: string } }
+        url: { type: string, format: uri }
+        docker:
+          $ref: '#/components/schemas/McpDockerConfig'
+
+    PluginSummary:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string }
+        version: { type: integer }
+        enabled: { type: boolean }
+
+    McpTokenSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    McpTokenCreated:
+      allOf:
+        - $ref: '#/components/schemas/McpTokenSummary'
+        - type: object
+          properties:
+            token: { type: string }
+            mcpJson: { type: object }
+
+x-rxwf-ac-mapping:
+  $ref-doc: ./ac-api-mapping.md
+  $ref-fixture: ../fixtures/ac-api-mapping.json
+  AC-1: [/workflows, /workflows/{workflowId}, /workflows/{workflowId}/validate]
+  AC-2: [/workflows/{workflowId}/versions, /workflows/{workflowId}/rollback]
+  AC-3: [/workflows/{workflowId}/executions, /executions]
+  AC-6: [/env, /env/{id}]
+  AC-7: [/workflows/import, /workflows/{workflowId}/export]
+  AC-10: [/workflows/debug-node]
+  AC-13: [/mcp/tools, /mcp/tools/call]
+  AC-18: [/chat/sessions, /chat/sessions/{sessionId}/messages, /chat/sessions/{sessionId}/stream]
+  AC-19: [/chat/sessions/{sessionId}/stream, /knowledge-bases]
+  AC-41: [/chat-bots, /public/chat/{slug}/session, /mcp/tools/call]
+  AC-24: [/mcp-servers, /mcp-servers/{id}/test, /mcp-servers/{id}/tools]
+  AC-26-27: [/plugins, /plugins/register, /plugins/{id}/enable]
+  AC-31-34: [/i18n/catalog-version, /i18n/locales, /themes, /users/me/preferences]
+  AC-35: [/health, /ready, /setup/checklist, /auth/status, /auth/setup, /system/features]
+  AC-36: [/ready]
+  AC-37-38: [/webhook/{workflowId}/{webhookPath}]
+  AC-39: [/setup/checklist]
+  AC-40: [/admin/i18n/{locale}, /admin/themes/{theme}]
+  AC-42: [/workflows/{workflowId}/executions, /executions/{executionId}]
+  AC-43: [/runners]
+  FR-7: [/templates, /templates/{templateId}/clone]
+  FR-10: [/credentials, /credentials/{credentialId}]
+  FR-16: [/mcp-tokens]

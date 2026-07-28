@@ -1,0 +1,33 @@
+import { describe, expect, it } from 'vitest';
+import { recordsToMap, resolveVarLayers } from './resolve.js';
+
+describe('resolveVarLayers', () => {
+  it('workflow overrides user and global', () => {
+    const map = resolveVarLayers({
+      global: { FOO: 'g' },
+      user: { FOO: 'u' },
+      workflow: { FOO: 'w' },
+    });
+    expect(map.FOO).toBe('w');
+  });
+
+  it('merges distinct keys from all layers', () => {
+    const map = resolveVarLayers({
+      global: { A: '1' },
+      user: { B: '2' },
+      workflow: { C: '3' },
+    });
+    expect(map).toEqual({ A: '1', B: '2', C: '3' });
+  });
+});
+
+describe('recordsToMap', () => {
+  it('maps key to value', () => {
+    expect(
+      recordsToMap([
+        { key: 'X', value: '1' },
+        { key: 'Y', value: '2' },
+      ]),
+    ).toEqual({ X: '1', Y: '2' });
+  });
+});

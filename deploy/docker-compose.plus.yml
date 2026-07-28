@@ -1,0 +1,80 @@
+# Full-stack compose: api + web + postgres + redis + crewai-runner.
+# api/web images are published by CI; uncomment build or image when wiring production.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${RXWF_POSTGRES_USER:-rxwf}
+      POSTGRES_PASSWORD: ${RXWF_POSTGRES_PASSWORD:?RXWF_POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${RXWF_POSTGRES_DB:-rxwf}
+    ports:
+      - "${RXWF_POSTGRES_PORT:-127.0.0.1:5432:5432}"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${RXWF_POSTGRES_USER:-rxwf} -d ${RXWF_POSTGRES_DB:-rxwf}",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - rxwf-pg-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: >
+      redis-server --requirepass ${RXWF_REDIS_PASSWORD:?RXWF_REDIS_PASSWORD required}
+    ports:
+      - "${RXWF_REDIS_PORT:-127.0.0.1:6379:6379}"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "-a",
+          "${RXWF_REDIS_PASSWORD}",
+          "ping",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  crewai-runner:
+    image: ${RXWF_CREWAI_IMAGE:-ghcr.io/rxwf/crewai-runner:1.3.0}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8071/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+    environment:
+      CREWAI_TELEMETRY: "false"
+      RXWF_TOOL_BRIDGE_HOST: api
+
+  api:
+    # image: ghcr.io/rxwf/api:1.3.0
+    # build:
+    #   context: ..
+    #   dockerfile: deploy/docker/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      crewai-runner:
+        condition: service_healthy
+    environment:
+      RXWF_DEPLOY_PROFILE: standard
+      RXWF_DATABASE_URL: postgres://${RXWF_POSTGRES_USER:-rxwf}:${RXWF_POSTGRES_PASSWORD}@postgres:5432/${RXWF_POSTGRES_DB:-rxwf}
+      RXWF_REDIS_URL: redis://:${RXWF_REDIS_PASSWORD}@redis:6379/0
+      CREWAI_RUNNER_URL: http://crewai-runner:8071
+      FEATURE_PLUS: "true"
+
+  web:
+    # image: ghcr.io/rxwf/web:1.3.0
+    depends_on:
+      - api
+
+volumes:
+  rxwf-pg-data:

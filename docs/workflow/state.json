@@ -1,0 +1,1381 @@
+{
+  "version": 1,
+  "phase": "verification",
+  "project": {
+    "goal": "根据 spec 审查完善未实现功能；审查并保证各工作流节点正常工作；编写全部节点帮助文档并关联跳转；E2E 测试保证功能正常运行",
+    "constraints": [
+      "现有 TypeScript monorepo 技术栈",
+      "TDD 方法论",
+      "P0 边界：docs/spec.md v2.0 全量功能",
+      "E2E 须覆盖 v2.0 全部功能；e2e-coverage-matrix 100%；每 Milestone 全量 E2E green",
+      "每 Milestone 结束才验收 M-x；Milestone 内 Wave 自动推进不中途确认",
+      "每 Milestone：E2E 全绿 + 人工验收用例全通过 + 验收 M-x 放行",
+      "框架/流程/UX/UI 大变动须人工确认",
+      "代码修改在独立分支；阶段验收后合入主分支",
+      "功能变更须同步更新文档，保证文档代码一致",
+      "项目文档归类 + 索引机制",
+      "遇问题须人工确认，不得自行忽略或绕过",
+      "帮助内容源 docs/help/zh，与 help-registry.ts 对齐",
+      "不破坏已有工作流 JSON 兼容性",
+      "Docker 真实依赖验收；Standard+Plus 双轨 compose"
+    ],
+    "methodology": "tdd",
+    "deliveryMode": "standard"
+  },
+  "activeMilestoneId": null,
+  "milestones": [
+    {
+      "id": "M-1",
+      "name": "文档索引与 v2.0 差距审计",
+      "order": 1,
+      "acIds": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "AC-008",
+        "AC-009",
+        "AC-010",
+        "AC-011",
+        "AC-012",
+        "AC-070",
+        "AC-071",
+        "AC-072",
+        "AC-073",
+        "AC-074"
+      ],
+      "taskIds": [
+        "T-001",
+        "T-002",
+        "T-003",
+        "T-004",
+        "T-005",
+        "T-006",
+        "T-007",
+        "T-008",
+        "T-009",
+        "T-010",
+        "T-011",
+        "T-012",
+        "T-013",
+        "T-014",
+        "T-015"
+      ],
+      "waves": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "demoHint": "展示 docs/INDEX.md、e2e-coverage-matrix.md、spec-gap-audit.md；索引 CI 校验 green",
+      "humanAcceptance": "required",
+      "status": "accepted",
+      "gate": {
+        "status": "approved",
+        "feedback": null,
+        "approvedAt": "2026-06-19T08:00:00.000Z"
+      },
+      "artifacts": {
+        "testReport": "docs/test/milestones/M-1-report.md",
+        "verificationReport": "docs/verification/milestones/M-1-report.md",
+        "acceptanceCases": "docs/test/milestones/M-1-acceptance.md"
+      }
+    },
+    {
+      "id": "M-2",
+      "name": "v2.0 半实现项补齐",
+      "order": 2,
+      "acIds": [
+        "AC-013",
+        "AC-014",
+        "AC-015",
+        "AC-016",
+        "AC-017",
+        "AC-018",
+        "AC-019",
+        "AC-020",
+        "AC-021",
+        "AC-022",
+        "AC-070",
+        "AC-071",
+        "AC-072",
+        "AC-073",
+        "AC-074"
+      ],
+      "taskIds": [
+        "T-016",
+        "T-017",
+        "T-018",
+        "T-019",
+        "T-020",
+        "T-021",
+        "T-022",
+        "T-023",
+        "T-024",
+        "T-025",
+        "T-026",
+        "T-027",
+        "T-028",
+        "T-029",
+        "T-030",
+        "T-031",
+        "T-032",
+        "T-033"
+      ],
+      "waves": [
+        5,
+        6,
+        7
+      ],
+      "demoHint": "差距清单项演示 + 本阶段 E2E green",
+      "humanAcceptance": "required",
+      "status": "accepted",
+      "gate": {
+        "status": "approved",
+        "feedback": null,
+        "approvedAt": "2026-06-20T12:00:00.000Z"
+      },
+      "artifacts": {
+        "testReport": "docs/test/milestones/M-2-report.md",
+        "verificationReport": "docs/verification/milestones/M-2-report.md",
+        "acceptanceCases": "docs/test/milestones/M-2-acceptance.md"
+      }
+    },
+    {
+      "id": "M-3",
+      "name": "全节点审查与修复",
+      "order": 3,
+      "acIds": [
+        "AC-023",
+        "AC-024",
+        "AC-025",
+        "AC-026",
+        "AC-027",
+        "AC-028",
+        "AC-029",
+        "AC-030",
+        "AC-031",
+        "AC-032",
+        "AC-033",
+        "AC-034",
+        "AC-070",
+        "AC-071",
+        "AC-072",
+        "AC-073",
+        "AC-074"
+      ],
+      "taskIds": [
+        "T-034",
+        "T-035",
+        "T-036",
+        "T-037",
+        "T-038",
+        "T-040",
+        "T-041",
+        "T-042",
+        "T-043",
+        "T-044",
+        "T-046",
+        "T-047",
+        "T-048",
+        "T-049",
+        "T-050",
+        "T-051",
+        "T-052",
+        "T-054",
+        "T-055",
+        "T-039",
+        "T-045",
+        "T-053",
+        "T-056",
+        "T-057",
+        "T-058",
+        "T-059",
+        "T-060",
+        "T-061",
+        "T-062",
+        "T-063",
+        "T-064",
+        "T-065",
+        "T-066",
+        "T-067",
+        "T-068",
+        "T-069",
+        "T-070",
+        "T-071",
+        "T-072",
+        "T-073",
+        "T-074",
+        "T-075",
+        "T-076",
+        "T-077",
+        "T-078",
+        "T-079",
+        "T-080",
+        "T-081",
+        "T-082",
+        "T-083",
+        "T-084"
+      ],
+      "waves": [
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "demoHint": "节点矩阵 Docker 验收；每 nodeType 至少 1 条 E2E",
+      "humanAcceptance": "required",
+      "status": "accepted",
+      "gate": {
+        "status": "approved",
+        "feedback": null,
+        "approvedAt": "2026-06-20T18:00:00.000Z"
+      },
+      "artifacts": {
+        "testReport": "docs/test/milestones/M-3-report.md",
+        "verificationReport": "docs/verification/milestones/M-3-report.md",
+        "acceptanceCases": "docs/test/milestones/M-3-acceptance.md"
+      }
+    },
+    {
+      "id": "M-4",
+      "name": "Group Chat MVP",
+      "order": 4,
+      "acIds": [
+        "AC-035",
+        "AC-036",
+        "AC-037",
+        "AC-038",
+        "AC-039",
+        "AC-040",
+        "AC-041",
+        "AC-042",
+        "AC-043",
+        "AC-044",
+        "AC-070",
+        "AC-071",
+        "AC-072",
+        "AC-073",
+        "AC-074"
+      ],
+      "taskIds": [
+        "T-085",
+        "T-086",
+        "T-087",
+        "T-088",
+        "T-089",
+        "T-090",
+        "T-091",
+        "T-092",
+        "T-093",
+        "T-094",
+        "T-095",
+        "T-096",
+        "T-097",
+        "T-098"
+      ],
+      "waves": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "demoHint": "Group Chat round-robin/orchestrator + UserProxy；Plus 轨 E2E",
+      "humanAcceptance": "required",
+      "status": "accepted",
+      "gate": {
+        "status": "approved",
+        "feedback": null,
+        "approvedAt": "2026-06-20T23:00:00.000Z"
+      },
+      "artifacts": {
+        "testReport": "docs/test/milestones/M-4-report.md",
+        "verificationReport": "docs/verification/milestones/M-4-report.md",
+        "acceptanceCases": "docs/test/milestones/M-4-acceptance.md"
+      }
+    },
+    {
+      "id": "M-5",
+      "name": "Binary 全链路",
+      "order": 5,
+      "acIds": [
+        "AC-045",
+        "AC-046",
+        "AC-047",
+        "AC-048",
+        "AC-049",
+        "AC-050",
+        "AC-051",
+        "AC-052",
+        "AC-053",
+        "AC-054",
+        "AC-055",
+        "AC-056",
+        "AC-070",
+        "AC-071",
+        "AC-072",
+        "AC-073",
+        "AC-074"
+      ],
+      "taskIds": [
+        "T-099",
+        "T-100",
+        "T-101",
+        "T-102",
+        "T-103",
+        "T-104",
+        "T-105",
+        "T-106",
+        "T-107",
+        "T-108",
+        "T-109",
+        "T-110",
+        "T-111",
+        "T-112",
+        "T-113",
+        "T-114"
+      ],
+      "waves": [
+        17,
+        18,
+        19,
+        20,
+        21
+      ],
+      "demoHint": "Binary 上传/下载/表达式；n8n 对标方案已人工确认",
+      "humanAcceptance": "required",
+      "status": "accepted",
+      "gate": {
+        "status": "approved",
+        "feedback": null,
+        "approvedAt": "2026-06-21T06:00:00.000Z"
+      },
+      "artifacts": {
+        "testReport": "docs/test/milestones/M-5-report.md",
+        "verificationReport": "docs/verification/milestones/M-5-report.md",
+        "acceptanceCases": "docs/test/milestones/M-5-acceptance.md"
+      }
+    },
+    {
+      "id": "M-6",
+      "name": "帮助全覆盖与最终回归",
+      "order": 6,
+      "acIds": [
+        "AC-057",
+        "AC-058",
+        "AC-059",
+        "AC-060",
+        "AC-061",
+        "AC-062",
+        "AC-063",
+        "AC-064",
+        "AC-065",
+        "AC-066",
+        "AC-067",
+        "AC-068",
+        "AC-069",
+        "AC-070",
+        "AC-071",
+        "AC-072",
+        "AC-073",
+        "AC-074"
+      ],
+      "taskIds": [
+        "T-115",
+        "T-116",
+        "T-117",
+        "T-118",
+        "T-119",
+        "T-120",
+        "T-121",
+        "T-122",
+        "T-123",
+        "T-124",
+        "T-125",
+        "T-126",
+        "T-127",
+        "T-128",
+        "T-129",
+        "T-130",
+        "T-131",
+        "T-132",
+        "T-133",
+        "T-134",
+        "T-135",
+        "T-136",
+        "T-137",
+        "T-138",
+        "T-139",
+        "T-140",
+        "T-141",
+        "T-142",
+        "T-143",
+        "T-144",
+        "T-145",
+        "T-146",
+        "T-147",
+        "T-148",
+        "T-149",
+        "T-150",
+        "T-151",
+        "T-152",
+        "T-153",
+        "T-154",
+        "T-155",
+        "T-156",
+        "T-157",
+        "T-158",
+        "T-159",
+        "T-160",
+        "T-161",
+        "T-162",
+        "T-163",
+        "T-164",
+        "T-165",
+        "T-166",
+        "T-167",
+        "T-168"
+      ],
+      "waves": [
+        22,
+        23,
+        24,
+        25,
+        26
+      ],
+      "demoHint": "每 nodeType 帮助跳转；e2e-coverage-matrix 100%；全量 E2E CI green",
+      "humanAcceptance": "required",
+      "status": "accepted",
+      "gate": {
+        "status": "approved",
+        "feedback": null,
+        "approvedAt": "2026-06-18T12:00:00.000Z"
+      },
+      "artifacts": {
+        "testReport": "docs/test/milestones/M-6-report.md",
+        "verificationReport": "docs/verification/milestones/M-6-report.md",
+        "acceptanceCases": "docs/test/milestones/M-6-acceptance.md"
+      }
+    }
+  ],
+  "artifacts": {
+    "plan": {
+      "path": "docs/workflow/plan.md",
+      "status": "done"
+    },
+    "requirements": {
+      "path": "docs/requirements/PRD.md",
+      "status": "done"
+    },
+    "architecture": {
+      "path": "docs/architecture/architecture.md",
+      "status": "done"
+    },
+    "tasking": {
+      "path": "docs/workflow/tasks.md",
+      "tasksDir": "docs/workflow/tasks/",
+      "status": "done"
+    },
+    "development": {
+      "status": "in_progress",
+      "waves": [
+        {
+          "wave": 1,
+          "milestoneId": "M-1",
+          "taskIds": [
+            "T-001",
+            "T-002",
+            "T-003",
+            "T-004",
+            "T-005",
+            "T-006"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-19T04:00:00.000Z"
+        },
+        {
+          "wave": 2,
+          "milestoneId": "M-1",
+          "taskIds": [
+            "T-007",
+            "T-008",
+            "T-009",
+            "T-010"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-19T05:00:00.000Z"
+        },
+        {
+          "wave": 3,
+          "milestoneId": "M-1",
+          "taskIds": [
+            "T-011",
+            "T-012",
+            "T-013"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-19T06:00:00.000Z"
+        },
+        {
+          "wave": 4,
+          "milestoneId": "M-1",
+          "taskIds": [
+            "T-014",
+            "T-015"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-19T07:00:00.000Z"
+        },
+        {
+          "wave": 5,
+          "milestoneId": "M-2",
+          "taskIds": [
+            "T-016",
+            "T-017",
+            "T-018",
+            "T-019",
+            "T-020",
+            "T-021",
+            "T-022",
+            "T-023",
+            "T-024",
+            "T-025"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-19T09:00:00.000Z"
+        },
+        {
+          "wave": 6,
+          "milestoneId": "M-2",
+          "taskIds": [
+            "T-026",
+            "T-027",
+            "T-028",
+            "T-029",
+            "T-030"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-19T10:00:00.000Z"
+        },
+        {
+          "wave": 7,
+          "milestoneId": "M-2",
+          "taskIds": [
+            "T-031",
+            "T-032",
+            "T-033"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-19T11:00:00.000Z"
+        },
+        {
+          "wave": 8,
+          "milestoneId": "M-3",
+          "taskIds": [
+            "T-034"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-20T12:30:00.000Z"
+        },
+        {
+          "wave": 9,
+          "milestoneId": "M-3",
+          "taskIds": [
+            "T-035",
+            "T-036",
+            "T-037",
+            "T-038",
+            "T-040",
+            "T-041",
+            "T-042",
+            "T-043",
+            "T-044",
+            "T-046",
+            "T-047",
+            "T-048",
+            "T-049",
+            "T-050",
+            "T-051",
+            "T-052"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-20T14:00:00.000Z"
+        },
+        {
+          "wave": 10,
+          "milestoneId": "M-3",
+          "taskIds": [
+            "T-054",
+            "T-055"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-20T15:00:00.000Z"
+        },
+        {
+          "wave": 11,
+          "milestoneId": "M-3",
+          "taskIds": [
+            "T-039",
+            "T-045",
+            "T-053",
+            "T-056",
+            "T-057",
+            "T-058",
+            "T-059",
+            "T-060",
+            "T-061",
+            "T-062",
+            "T-063",
+            "T-064",
+            "T-065",
+            "T-066",
+            "T-067",
+            "T-068",
+            "T-069",
+            "T-070",
+            "T-071",
+            "T-072",
+            "T-073",
+            "T-074",
+            "T-075",
+            "T-076",
+            "T-077",
+            "T-078",
+            "T-079"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-20T16:00:00.000Z"
+        },
+        {
+          "wave": 12,
+          "milestoneId": "M-3",
+          "taskIds": [
+            "T-080",
+            "T-081",
+            "T-082",
+            "T-083",
+            "T-084"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-20T17:00:00.000Z"
+        },
+        {
+          "wave": 13,
+          "milestoneId": "M-4",
+          "taskIds": [
+            "T-085",
+            "T-086",
+            "T-087",
+            "T-088",
+            "T-089"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-20T19:00:00.000Z"
+        },
+        {
+          "wave": 14,
+          "milestoneId": "M-4",
+          "taskIds": [
+            "T-090",
+            "T-091",
+            "T-092"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-20T20:00:00.000Z"
+        },
+        {
+          "wave": 15,
+          "milestoneId": "M-4",
+          "taskIds": [
+            "T-093",
+            "T-094",
+            "T-095"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-20T21:00:00.000Z"
+        },
+        {
+          "wave": 16,
+          "milestoneId": "M-4",
+          "taskIds": [
+            "T-096",
+            "T-097",
+            "T-098"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-20T22:00:00.000Z"
+        },
+        {
+          "wave": 17,
+          "milestoneId": "M-5",
+          "taskIds": [
+            "T-099",
+            "T-100",
+            "T-101"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-21T00:00:00.000Z"
+        },
+        {
+          "wave": 18,
+          "milestoneId": "M-5",
+          "taskIds": [
+            "T-102",
+            "T-103"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-21T01:00:00.000Z"
+        },
+        {
+          "wave": 19,
+          "milestoneId": "M-5",
+          "taskIds": [
+            "T-104",
+            "T-105",
+            "T-106",
+            "T-107",
+            "T-108"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-21T02:00:00.000Z"
+        },
+        {
+          "wave": 20,
+          "milestoneId": "M-5",
+          "taskIds": [
+            "T-109",
+            "T-110",
+            "T-111"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-21T03:00:00.000Z"
+        },
+        {
+          "wave": 21,
+          "milestoneId": "M-5",
+          "taskIds": [
+            "T-112",
+            "T-113",
+            "T-114"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-21T04:00:00.000Z"
+        },
+        {
+          "wave": 22,
+          "milestoneId": "M-6",
+          "taskIds": [
+            "T-115",
+            "T-116",
+            "T-117",
+            "T-118",
+            "T-119",
+            "T-120",
+            "T-121",
+            "T-122",
+            "T-123",
+            "T-124",
+            "T-125",
+            "T-126",
+            "T-127",
+            "T-128",
+            "T-129",
+            "T-130",
+            "T-131",
+            "T-132",
+            "T-133",
+            "T-134",
+            "T-135",
+            "T-136",
+            "T-137",
+            "T-138",
+            "T-139",
+            "T-140",
+            "T-141",
+            "T-142",
+            "T-143",
+            "T-144",
+            "T-145",
+            "T-146",
+            "T-147",
+            "T-148",
+            "T-149",
+            "T-150",
+            "T-151",
+            "T-152",
+            "T-153",
+            "T-154",
+            "T-155",
+            "T-156",
+            "T-157",
+            "T-158",
+            "T-159"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-21T08:00:00.000Z"
+        },
+        {
+          "wave": 23,
+          "milestoneId": "M-6",
+          "taskIds": [
+            "T-160",
+            "T-161",
+            "T-162"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-21T08:30:00.000Z"
+        },
+        {
+          "wave": 24,
+          "milestoneId": "M-6",
+          "taskIds": [
+            "T-163",
+            "T-164"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-21T09:00:00.000Z"
+        },
+        {
+          "wave": 25,
+          "milestoneId": "M-6",
+          "taskIds": [
+            "T-165",
+            "T-166",
+            "T-167"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-21T10:00:00.000Z"
+        },
+        {
+          "wave": 26,
+          "milestoneId": "M-6",
+          "taskIds": [
+            "T-168"
+          ],
+          "status": "merged",
+          "mergedAt": "2026-06-21T13:30:00.000Z"
+        }
+      ]
+    },
+    "testing": {
+      "path": "docs/test/test-report.md",
+      "status": "done",
+      "milestones": {
+        "M-1": {
+          "path": "docs/test/milestones/M-1-report.md",
+          "status": "done",
+          "conclusion": "passed",
+          "testedAt": "2026-06-18T00:00:00.000Z"
+        },
+        "M-2": {
+          "path": "docs/test/milestones/M-2-report.md",
+          "status": "done",
+          "conclusion": "passed",
+          "testedAt": "2026-06-20T03:52:00.000Z"
+        },
+        "M-3": {
+          "path": "docs/test/milestones/M-3-report.md",
+          "status": "done",
+          "conclusion": "passed",
+          "testedAt": "2026-06-20T07:30:00.000Z"
+        },
+        "M-4": {
+          "path": "docs/test/milestones/M-4-report.md",
+          "status": "done",
+          "conclusion": "passed",
+          "testedAt": "2026-06-20T19:32:00.000Z"
+        },
+        "M-5": {
+          "path": "docs/test/milestones/M-5-report.md",
+          "status": "done",
+          "conclusion": "passed",
+          "testedAt": "2026-06-21T05:00:00.000Z"
+        },
+        "M-6": {
+          "path": "docs/test/milestones/M-6-report.md",
+          "status": "done",
+          "conclusion": "passed",
+          "testedAt": "2026-06-21T13:30:00.000Z"
+        }
+      }
+    },
+    "verification": {
+      "path": "docs/verification/verification-report.md",
+      "status": "done",
+      "milestones": {
+        "M-1": {
+          "path": "docs/verification/milestones/M-1-report.md",
+          "status": "done",
+          "conclusion": "passed",
+          "verifiedAt": "2026-06-18T00:00:00.000Z",
+          "recommendedPhase": "none"
+        },
+        "M-2": {
+          "path": "docs/verification/milestones/M-2-report.md",
+          "status": "done",
+          "conclusion": "passed",
+          "verifiedAt": "2026-06-20T04:00:00.000Z",
+          "recommendedPhase": "none"
+        },
+        "M-3": {
+          "path": "docs/verification/milestones/M-3-report.md",
+          "status": "done",
+          "conclusion": "passed",
+          "verifiedAt": "2026-06-20T08:00:00.000Z",
+          "recommendedPhase": "none"
+        },
+        "M-4": {
+          "path": "docs/verification/milestones/M-4-report.md",
+          "status": "done",
+          "conclusion": "passed",
+          "verifiedAt": "2026-06-20T22:00:00.000Z",
+          "recommendedPhase": "none"
+        },
+        "M-5": {
+          "path": "docs/verification/milestones/M-5-report.md",
+          "status": "done",
+          "conclusion": "passed",
+          "verifiedAt": "2026-06-21T05:00:00.000Z",
+          "recommendedPhase": "none"
+        },
+        "M-6": {
+          "path": "docs/verification/milestones/M-6-report.md",
+          "status": "done",
+          "conclusion": "passed",
+          "verifiedAt": "2026-06-21T13:30:00.000Z",
+          "recommendedPhase": "none"
+        }
+      }
+    }
+  },
+  "gates": {
+    "plan": {
+      "status": "approved",
+      "feedback": null,
+      "approvedAt": "2026-06-18T23:30:00.000Z"
+    },
+    "prd": {
+      "status": "approved",
+      "feedback": null,
+      "approvedAt": "2026-06-19T00:00:00.000Z"
+    },
+    "architecture": {
+      "status": "approved",
+      "feedback": null,
+      "approvedAt": "2026-06-19T01:00:00.000Z"
+    },
+    "tasks": {
+      "status": "approved",
+      "feedback": null,
+      "approvedAt": "2026-06-19T03:00:00.000Z"
+    },
+    "finalAcceptance": {
+      "status": "pending",
+      "feedback": null,
+      "approvedAt": null
+    },
+    "m5-binary-plan": {
+      "status": "approved",
+      "feedback": null,
+      "approvedAt": "2026-06-21T01:00:00.000Z",
+      "selectedOption": "OPT-01",
+      "confirmedBy": "user",
+      "confirmationDoc": "docs/test/milestones/M-5-binary-plan-confirmation.md"
+    }
+  },
+  "retryCount": {
+    "development": 0,
+    "testing": 0
+  },
+  "clarifications": {
+    "plan": [
+      {
+        "id": "OQ-001",
+        "blocking": true,
+        "status": "resolved",
+        "chosenText": "v2.0 全量；多阶段人工验收；验收用例全通过；独立分支→合主分支；文档同步；文档索引；框架/流程/UX/UI 大变动须确认；遇问题不得自行处理"
+      },
+      {
+        "id": "OQ-002",
+        "blocking": true,
+        "status": "resolved",
+        "chosenText": "外部依赖节点一律 Docker 真实验收；CI+人工均 compose 自动启停；阻塞须人工确认"
+      },
+      {
+        "id": "OQ-003",
+        "blocking": true,
+        "status": "resolved",
+        "chosenText": "E2E 真实 Docker 依赖；compose 自动启停；Standard(A)+Plus(B) 双轨验收栈"
+      },
+      {
+        "id": "OQ-004",
+        "blocking": true,
+        "status": "resolved",
+        "chosenText": "按 group-chat spec 实现 MVP；架构冲突暂停人工确认；Plus 轨验收"
+      },
+      {
+        "id": "OQ-005",
+        "blocking": true,
+        "status": "resolved",
+        "chosenText": "binary 参照 n8n/业界审查改善+人工方案确认；独立 Milestone；大变动暂停人工确认"
+      },
+      {
+        "id": "OQ-006",
+        "blocking": false,
+        "status": "resolved",
+        "chosenText": "半实现项一律补齐至 spec AC；不允许登记排除；阻塞须人工确认"
+      },
+      {
+        "id": "OQ-007",
+        "blocking": false,
+        "status": "resolved",
+        "chosenText": "每 nodeType 独立 Markdown + registry 一一映射；≥300 字含用途/端口/参数/错误/示例"
+      },
+      {
+        "id": "OQ-008",
+        "blocking": false,
+        "status": "resolved",
+        "chosenText": "docs/README.md + docs/INDEX.md + CI 索引校验；FR/nodeType 交叉引用"
+      }
+    ],
+    "prd": [
+      {
+        "id": "OQ-009",
+        "blocking": false,
+        "status": "resolved",
+        "chosenText": "人工与 E2E 分离；人工侧重 UX/文档/环境/边界；不需一一对应但覆盖全"
+      },
+      {
+        "id": "OQ-010",
+        "blocking": false,
+        "status": "resolved",
+        "chosenText": "超时可配置，默认 -1 不超时；超时后失败终止+审计"
+      },
+      {
+        "id": "OQ-011",
+        "blocking": false,
+        "status": "resolved",
+        "chosenText": "帮助示例 A+B+C：可复制配置；可执行节点须 JSON/fixture；卫星节点连接示意+参数表"
+      }
+    ]
+  },
+  "history": [
+    {
+      "at": "2026-06-18T00:00:00.000Z",
+      "phase": "planning",
+      "note": "流水线初始化；intake 已写入用户目标"
+    },
+    {
+      "at": "2026-06-18T12:00:00.000Z",
+      "phase": "planning",
+      "agent": "project-manager",
+      "action": "completed",
+      "note": "等待计划门禁（含待确认项逐题澄清）"
+    },
+    {
+      "at": "2026-06-18T14:00:00.000Z",
+      "phase": "planning",
+      "agent": "orchestrator",
+      "action": "clarification",
+      "note": "OQ-001 resolved：v2.0 全量 + 阶段验收/分支/文档/索引约束"
+    },
+    {
+      "at": "2026-06-18T15:00:00.000Z",
+      "phase": "planning",
+      "agent": "orchestrator",
+      "action": "clarification",
+      "note": "OQ-002 resolved：Docker 真实依赖验收 + compose 自动启停（CI+人工）"
+    },
+    {
+      "at": "2026-06-18T16:00:00.000Z",
+      "phase": "planning",
+      "agent": "orchestrator",
+      "action": "clarification",
+      "note": "OQ-003 resolved：Standard+Plus 双轨 compose；E2E 真实依赖自动启停"
+    },
+    {
+      "at": "2026-06-18T17:00:00.000Z",
+      "phase": "planning",
+      "agent": "orchestrator",
+      "action": "clarification",
+      "note": "OQ-004 resolved：Group Chat 按 spec 实现 MVP；冲突须人工确认"
+    },
+    {
+      "at": "2026-06-18T18:00:00.000Z",
+      "phase": "planning",
+      "agent": "orchestrator",
+      "action": "clarification",
+      "note": "OQ-005 resolved：binary 独立 Milestone；n8n/业界对标审查+人工方案确认"
+    },
+    {
+      "at": "2026-06-18T19:00:00.000Z",
+      "phase": "planning",
+      "agent": "orchestrator",
+      "action": "clarification",
+      "note": "OQ-006 resolved：半实现项一律补齐，不允许登记排除"
+    },
+    {
+      "at": "2026-06-18T20:00:00.000Z",
+      "phase": "planning",
+      "agent": "orchestrator",
+      "action": "clarification",
+      "note": "OQ-007 resolved：帮助每 nodeType 独立文 + 质量门槛"
+    },
+    {
+      "at": "2026-06-18T21:00:00.000Z",
+      "phase": "planning",
+      "agent": "orchestrator",
+      "action": "clarification",
+      "note": "OQ-008 resolved：INDEX.md + README 增强 + CI 索引校验；全部 OQ 已 resolved"
+    },
+    {
+      "at": "2026-06-18T22:00:00.000Z",
+      "phase": "planning",
+      "agent": "orchestrator",
+      "action": "plan-amendment",
+      "note": "用户补充：每个 Milestone 均须 E2E + 人工验收双门禁"
+    },
+    {
+      "at": "2026-06-18T23:00:00.000Z",
+      "phase": "planning",
+      "agent": "orchestrator",
+      "action": "plan-amendment",
+      "note": "用户补充：E2E 须覆盖 v2.0 全部功能；e2e-coverage-matrix 100%"
+    },
+    {
+      "at": "2026-06-18T23:30:00.000Z",
+      "phase": "planning",
+      "agent": "orchestrator",
+      "action": "gate_approved",
+      "note": "用户批准计划；6 个 Milestone 已同步；进入 requirements 阶段"
+    },
+    {
+      "at": "2026-06-18T24:00:00.000Z",
+      "phase": "requirements",
+      "agent": "requirements-analyst",
+      "action": "completed",
+      "note": "等待 PRD 门禁（含待确认项逐题澄清）"
+    },
+    {
+      "at": "2026-06-19T00:00:00.000Z",
+      "phase": "requirements",
+      "agent": "orchestrator",
+      "action": "gate_approved",
+      "note": "用户批准 PRD；进入 architecture 阶段"
+    },
+    {
+      "at": "2026-06-19T01:00:00.000Z",
+      "phase": "architecture",
+      "agent": "architect",
+      "action": "completed",
+      "note": "等待架构人工批准"
+    },
+    {
+      "at": "2026-06-19T02:00:00.000Z",
+      "phase": "architecture",
+      "agent": "orchestrator",
+      "action": "gate_approved",
+      "note": "用户批准架构；进入 tasking 阶段"
+    },
+    {
+      "at": "2026-06-18T14:13:59.567Z",
+      "phase": "tasking",
+      "agent": "dev-leader",
+      "action": "completed",
+      "note": "等待任务清单人工批准"
+    },
+    {
+      "at": "2026-06-19T03:00:00.000Z",
+      "phase": "tasking",
+      "agent": "orchestrator",
+      "action": "gate_approved",
+      "note": "用户批准任务清单；进入 development；M-1 Wave 1 启动"
+    },
+    {
+      "at": "2026-06-19T04:00:00.000Z",
+      "phase": "development",
+      "agent": "orchestrator",
+      "action": "wave_merged",
+      "note": "M-1 Wave 1 完成：T-001～T-006 全部 done"
+    },
+    {
+      "at": "2026-06-18T00:00:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-1",
+      "agent": "tester",
+      "action": "milestone_testing_passed",
+      "note": "M-1 milestone 测试 passed：scripts 16/16、lite E2E 20/20；报告 docs/test/milestones/M-1-report.md；交 verifier"
+    },
+    {
+      "at": "2026-06-18T00:00:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-1",
+      "agent": "verifier",
+      "action": "milestone_verification_passed",
+      "note": "M-1 轻量验证 passed：AC-001～012 交付物齐全（AC-011 partial）；gate_pending 待人工验收 M-1"
+    },
+    {
+      "at": "2026-06-19T11:00:00.000Z",
+      "phase": "development",
+      "agent": "orchestrator",
+      "action": "wave_merged",
+      "note": "M-2 Wave 7 完成：T-031～T-033 全部 done；M-2 development 完成，进入 testing"
+    },
+    {
+      "at": "2026-06-20T03:52:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-2",
+      "agent": "tester",
+      "action": "milestone_testing_passed",
+      "note": "M-2 milestone 测试 passed：单元/集成 530/530 green；lite E2E M-2 10/10 + M-1 基线 19/19；workflow-acl standard E2E 因 Docker 未运行 blocked（API ACL 6 测已覆盖）；报告 docs/test/milestones/M-2-report.md；交 verifier"
+    },
+    {
+      "at": "2026-06-20T04:00:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-2",
+      "agent": "verifier",
+      "action": "milestone_verification_passed",
+      "note": "M-2 验证 passed：AC-013～018/021/022 met；AC-019/020 partial（人工签字与 standard E2E 待验）；gate.status=pending 待人工验收 M-2；报告 docs/verification/milestones/M-2-report.md"
+    },
+    {
+      "at": "2026-06-20T12:00:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-2",
+      "agent": "orchestrator",
+      "action": "milestone_accepted",
+      "note": "用户验收 M-2；合入 master；启动 M-3 Wave 8（T-034）"
+    },
+    {
+      "at": "2026-06-20T14:00:00.000Z",
+      "phase": "development",
+      "milestoneId": "M-3",
+      "agent": "orchestrator",
+      "action": "wave_merged",
+      "note": "M-3 Wave 9 完成：T-035～T-052 全部 done（16 nodeType）；启动 Wave 10"
+    },
+    {
+      "at": "2026-06-20T07:30:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-3",
+      "agent": "tester",
+      "action": "milestone_testing_passed",
+      "note": "M-3 milestone 测试 passed：校验 4/5（--milestone M-3 8 gap open）；lite E2E 150/151；schema-compat 6/6；standard 抽样 workflow-acl 3/3；报告 docs/test/milestones/M-3-report.md；交 verifier"
+    },
+    {
+      "at": "2026-06-20T08:00:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-3",
+      "agent": "verifier",
+      "action": "milestone_verification_passed",
+      "note": "M-3 验证 passed：AC-023/024/028～030/033/034 met；AC-025/026/027/032 partial（standard 抽样/plus image）；AC-031/070 pending 人工；8 spec partial gap 非节点项不阻断；gate.status=pending 待人工验收 M-3；报告 docs/verification/milestones/M-3-report.md"
+    },
+    {
+      "at": "2026-06-20T18:00:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-3",
+      "agent": "orchestrator",
+      "action": "milestone_accepted",
+      "note": "用户验收 M-3；合入 master；启动 M-4 Wave 13（T-085～T-089）"
+    },
+    {
+      "at": "2026-06-20T19:32:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-4",
+      "agent": "tester",
+      "action": "milestone_testing_passed",
+      "note": "M-4 milestone 测试 passed：校验 3/4（--milestone M-4 GAP-018/019 open）；group-chat 单测 50/50；lite E2E group-chat 7/7；schema-compat 6/6；plus compose blocked；报告 docs/test/milestones/M-4-report.md；交 verifier"
+    },
+    {
+      "at": "2026-06-20T22:00:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-4",
+      "agent": "verifier",
+      "action": "milestone_verification_passed",
+      "note": "M-4 验证 passed：AC-038/040/044 met；AC-035～037/039/042/043 partial（plus compose blocked）；AC-041/070 pending 人工；GAP-018/019 非 Group Chat 不阻断；gate.status=pending 待人工验收 M-4；报告 docs/verification/milestones/M-4-report.md"
+    },
+    {
+      "at": "2026-06-20T23:00:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-4",
+      "agent": "orchestrator",
+      "action": "milestone_accepted",
+      "note": "用户验收 M-4；合入 master；启动 M-5 Wave 17（T-099～T-101）"
+    },
+    {
+      "at": "2026-06-21T01:00:00.000Z",
+      "phase": "development",
+      "milestoneId": "M-5",
+      "agent": "orchestrator",
+      "action": "milestone_gate_cleared",
+      "note": "用户确认 OPT-01；T-103 B-6 cleared；Wave 19～21 实现与 E2E Green"
+    },
+    {
+      "at": "2026-06-21T05:00:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-5",
+      "agent": "tester",
+      "action": "milestone_testing_passed",
+      "note": "M-5 testing passed：Binary 单测 87/87；lite E2E Binary 2/2；lite 152/155；standard blocked（Docker）；报告 docs/test/milestones/M-5-report.md"
+    },
+    {
+      "at": "2026-06-21T05:00:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-5",
+      "agent": "verifier",
+      "action": "milestone_verification_passed",
+      "note": "M-5 验证 passed：OPT-01 P1～P4；AC-054 pending 人工 11 条；GAP-002 Standard blob planned；gate pending 待验收 M-5"
+    },
+    {
+      "at": "2026-06-21T06:00:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-5",
+      "agent": "orchestrator",
+      "action": "milestone_accepted",
+      "note": "用户验收 M-5；合入 master；启动 M-6 Wave 22（T-115～T-159 帮助文档）"
+    },
+    {
+      "at": "2026-06-21T08:00:00.000Z",
+      "phase": "development",
+      "milestoneId": "M-6",
+      "agent": "orchestrator",
+      "action": "wave_merged",
+      "note": "M-6 Wave 22 完成：T-115～T-159 共 45 篇帮助文档 validate green"
+    },
+    {
+      "at": "2026-06-21T10:00:00.000Z",
+      "phase": "development",
+      "milestoneId": "M-6",
+      "agent": "orchestrator",
+      "action": "wave_merged",
+      "note": "M-6 Wave 25 完成：matrix 100% + INDEX lint green + spec-gap closed + M-6-acceptance.md"
+    },
+    {
+      "at": "2026-06-21T13:30:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-6",
+      "agent": "tester",
+      "action": "milestone_testing_passed",
+      "note": "M-6 testing passed：help 45/45；lite E2E 247/248；standard blocked（Docker）；报告 docs/test/milestones/M-6-report.md"
+    },
+    {
+      "at": "2026-06-21T13:30:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-6",
+      "agent": "verifier",
+      "action": "milestone_verification_passed",
+      "note": "M-6 验证 passed：AC-065 pending 人工 12 条；standard/plus blocked Docker；gate pending 待验收 M-6"
+    },
+    {
+      "at": "2026-06-18T12:00:00.000Z",
+      "phase": "verification",
+      "milestoneId": "M-6",
+      "agent": "orchestrator",
+      "action": "milestone_accepted",
+      "note": "用户验收 M-6；M-1～M-6 全部 accepted；待 gates.finalAcceptance 最终放行"
+    }
+  ]
+}

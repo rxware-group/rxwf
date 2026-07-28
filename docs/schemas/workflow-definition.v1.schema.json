@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rx-workflow.dev/schemas/workflow-definition.v1.json",
+  "title": "WorkflowDefinition",
+  "type": "object",
+  "required": ["schemaVersion", "name", "nodes", "connections"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1,
+      "description": "定义格式版本，用于迁移"
+    },
+    "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "active": { "type": "boolean", "default": false },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "timezone": { "type": "string" },
+        "timeoutSeconds": { "type": "integer", "minimum": 1 },
+        "errorWorkflowId": { "type": "string" },
+        "maxConcurrentInstances": { "type": "integer", "minimum": 1 },
+        "runnerPolicy": { "$ref": "#/$defs/runnerPolicy" }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "connections": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/connection" }
+    },
+    "pinData": {
+      "type": "object",
+      "description": "开发态 Pin；生产执行忽略，保存时可 strip"
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "tags": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "$defs": {
+    "runnerOs": {
+      "type": "string",
+      "enum": ["windows", "linux", "macos"]
+    },
+    "runnerPolicy": {
+      "type": "object",
+      "description": "工作流级执行 Runner 策略，见 adr-node-runner.md",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["embedded", "auto", "pinned", "label"],
+          "default": "auto"
+        },
+        "runnerId": {
+          "type": "string",
+          "description": "mode=pinned 时必填"
+        },
+        "platform": { "$ref": "#/$defs/runnerOs" },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "maxItems": 16
+        },
+        "fallback": {
+          "type": "string",
+          "enum": ["fail", "embedded"],
+          "default": "embedded"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "mode": { "const": "pinned" } },
+            "required": ["mode"]
+          },
+          "then": { "required": ["runnerId"] }
+        },
+        {
+          "if": {
+            "properties": { "mode": { "const": "label" } },
+            "required": ["mode"]
+          },
+          "then": { "required": ["labels"] }
+        }
+      ]
+    },
+    "nodeRunnerOverride": {
+      "type": "object",
+      "description": "节点级 Runner 覆盖",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["inherit", "embedded", "auto", "pinned", "label"],
+          "default": "inherit"
+        },
+        "runnerId": { "type": "string" },
+        "platform": { "$ref": "#/$defs/runnerOs" },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "maxItems": 16
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "mode": { "const": "pinned" } },
+            "required": ["mode"]
+          },
+          "then": { "required": ["runnerId"] }
+        },
+        {
+          "if": {
+            "properties": { "mode": { "const": "label" } },
+            "required": ["mode"]
+          },
+          "then": { "required": ["labels"] }
+        }
+      ]
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "type", "name", "position", "parameters"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "pattern": "^[a-z][a-z0-9.]*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "position": {
+          "type": "object",
+          "required": ["x", "y"],
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" }
+          }
+        },
+        "parameters": { "type": "object" },
+        "disabled": { "type": "boolean", "default": false },
+        "runner": { "$ref": "#/$defs/nodeRunnerOverride" }
+      }
+    },
+    "connection": {
+      "type": "object",
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "fromOutput": { "type": "string", "default": "main" },
+        "toInput": { "type": "string", "default": "main" }
+      }
+    }
+  }
+}

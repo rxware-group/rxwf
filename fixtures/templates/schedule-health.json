@@ -1,0 +1,22 @@
+{
+  "description": "定时触发并检查 HTTP 健康端点",
+  "schemaVersion": 1,
+  "name": "Schedule Health Check",
+  "nodes": [
+    {
+      "id": "sch1",
+      "type": "scheduleTrigger",
+      "name": "Every hour",
+      "position": { "x": 0, "y": 0 },
+      "parameters": { "cron": "0 * * * *" }
+    },
+    {
+      "id": "http1",
+      "type": "httpRequest",
+      "name": "Health",
+      "position": { "x": 280, "y": 0 },
+      "parameters": { "method": "GET", "url": "https://httpbin.org/status/200" }
+    }
+  ],
+  "connections": [{ "from": "sch1", "to": "http1" }]
+}

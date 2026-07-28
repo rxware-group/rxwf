@@ -1,0 +1,43 @@
+name: Nightly Runner Agent E2E
+
+on:
+  schedule:
+    # 03:00 UTC daily
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  runner-agent-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build runner-agent CLI
+        run: pnpm --filter @rxwf/runner-agent build
+
+      - name: Runner package boundary lint
+        run: pnpm add -D dependency-cruiser
+      - run: pnpm exec depcruise packages/runner-agent packages/runner-sdk packages/runner-protocol --config .dependency-cruiser.cjs
+
+      - name: Runner v1.1 acceptance + rxwf-runner spawn E2E
+        env:
+          RXWF_TEST_RUNNER_AGENT: '1'
+        run: >-
+          pnpm --filter @rxwf/api test --
+          runner-v1.1-acceptance
+          runner-agent-e2e
+          runner-remote
+          runner-ws
+          runners-registration

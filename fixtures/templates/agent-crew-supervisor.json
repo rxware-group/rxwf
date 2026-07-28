@@ -1,0 +1,114 @@
+{
+  "category": "agent",
+  "description": "Crew Supervisor：监督者 LLM 逐步选择工人 Agent 执行任务",
+  "schemaVersion": 1,
+  "name": "Crew Supervisor",
+  "settings": { "workflowKind": "agent" },
+  "nodes": [
+    {
+      "id": "tr",
+      "type": "manualTrigger",
+      "name": "Manual",
+      "position": { "x": 80, "y": 40 },
+      "parameters": {}
+    },
+    {
+      "id": "sup",
+      "type": "crewSupervisor",
+      "name": "Supervisor",
+      "position": { "x": 320, "y": 120 },
+      "parameters": {
+        "maxSteps": 15,
+        "allowParallel": true,
+        "supervisorProvider": "ollama",
+        "supervisorModel": "llama3",
+        "supervisorCredentialId": ""
+      }
+    },
+    {
+      "id": "w1",
+      "type": "aiAgent",
+      "name": "Researcher",
+      "position": { "x": 80, "y": 220 },
+      "parameters": {
+        "role": "Researcher",
+        "goal": "Gather and summarize information",
+        "backstory": "",
+        "promptType": "auto",
+        "text": "",
+        "systemMessage": "",
+        "maxIterations": 10,
+        "timeoutMs": 120000,
+        "returnIntermediateSteps": true,
+        "sessionId": ""
+      }
+    },
+    {
+      "id": "w2",
+      "type": "aiAgent",
+      "name": "Reviewer",
+      "position": { "x": 400, "y": 220 },
+      "parameters": {
+        "role": "Reviewer",
+        "goal": "Review and improve prior output",
+        "backstory": "",
+        "promptType": "auto",
+        "text": "",
+        "systemMessage": "",
+        "maxIterations": 10,
+        "timeoutMs": 120000,
+        "returnIntermediateSteps": true,
+        "sessionId": ""
+      }
+    },
+    {
+      "id": "mdl-w1",
+      "type": "aiChatModel",
+      "name": "Model R",
+      "position": { "x": 80, "y": 340 },
+      "parameters": { "provider": "ollama", "model": "llama3" }
+    },
+    {
+      "id": "mdl-w2",
+      "type": "aiChatModel",
+      "name": "Model V",
+      "position": { "x": 400, "y": 340 },
+      "parameters": { "provider": "ollama", "model": "llama3" }
+    },
+    {
+      "id": "t-w1",
+      "type": "toolHttp",
+      "name": "Tool R",
+      "position": { "x": 160, "y": 420 },
+      "parameters": {
+        "method": "GET",
+        "url": "https://httpbin.org/get",
+        "headers": {},
+        "body": "",
+        "toolDescription": "Researcher HTTP tool"
+      }
+    },
+    {
+      "id": "t-w2",
+      "type": "toolHttp",
+      "name": "Tool V",
+      "position": { "x": 480, "y": 420 },
+      "parameters": {
+        "method": "GET",
+        "url": "https://httpbin.org/get",
+        "headers": {},
+        "body": "",
+        "toolDescription": "Reviewer HTTP tool"
+      }
+    }
+  ],
+  "connections": [
+    { "from": "tr", "to": "sup" },
+    { "from": "w1", "to": "sup", "fromOutput": "crew_member", "toInput": "crew_member" },
+    { "from": "w2", "to": "sup", "fromOutput": "crew_member", "toInput": "crew_member" },
+    { "from": "mdl-w1", "to": "w1", "fromOutput": "ai_languageModel", "toInput": "ai_languageModel" },
+    { "from": "mdl-w2", "to": "w2", "fromOutput": "ai_languageModel", "toInput": "ai_languageModel" },
+    { "from": "t-w1", "to": "w1", "fromOutput": "ai_tool", "toInput": "ai_tool" },
+    { "from": "t-w2", "to": "w2", "fromOutput": "ai_tool", "toInput": "ai_tool" }
+  ]
+}

@@ -1,0 +1,16 @@
+services:
+  crewai-runner:
+    image: ${RXWF_CREWAI_IMAGE:-ghcr.io/rxwf/crewai-runner:1.3.0}
+    ports:
+      - "${RXWF_CREWAI_PORT:-127.0.0.1:8071:8071}"
+    environment:
+      CREWAI_TELEMETRY: "false"
+      RXWF_TOOL_BRIDGE_HOST: host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8071/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s

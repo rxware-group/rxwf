@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Acceptance criteria to API path mapping for lint-ac-mapping.mjs",
+  "mappings": [
+    {
+      "ac": "AC-1",
+      "summary": "工作流创建与编辑",
+      "paths": [
+        "/workflows",
+        "/workflows/{workflowId}",
+        "/workflows/{workflowId}/validate"
+      ],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-2",
+      "summary": "版本列表与回滚",
+      "paths": [
+        "/workflows/{workflowId}/versions",
+        "/workflows/{workflowId}/rollback"
+      ],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-3",
+      "summary": "工作流执行与全局列表",
+      "paths": [
+        "/workflows/{workflowId}/executions",
+        "/executions"
+      ],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-6",
+      "summary": "环境变量 CRUD",
+      "paths": ["/env", "/env/{id}"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-7",
+      "summary": "导入导出",
+      "paths": ["/workflows/import", "/workflows/{workflowId}/export"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-10",
+      "summary": "调试单节点",
+      "paths": ["/workflows/debug-node"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-13",
+      "summary": "MCP Server HTTP tools",
+      "paths": ["/mcp/tools", "/mcp/tools/call"],
+      "inOpenapi": true,
+      "note": "根路径 /mcp，非 /api 前缀"
+    },
+    {
+      "ac": "AC-16",
+      "summary": "RAG（v1.1，未实现）",
+      "paths": [],
+      "inOpenapi": false,
+      "optional": true
+    },
+    {
+      "ac": "AC-18",
+      "summary": "AI Chat 会话",
+      "paths": [
+        "/chat/sessions",
+        "/chat/sessions/{sessionId}/messages",
+        "/chat/sessions/{sessionId}/stream"
+      ],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-19",
+      "summary": "AI Chat RAG 引用与 fallback",
+      "paths": [
+        "/chat/sessions/{sessionId}/stream",
+        "/knowledge-bases"
+      ],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-41",
+      "summary": "Chat Bot 三渠道发布",
+      "paths": [
+        "/chat-bots",
+        "/chat-bots/{id}/publish",
+        "/chat-bots/{id}/api-keys",
+        "/public/chat/{slug}/session",
+        "/public/chat/sessions/{id}/stream",
+        "/public/chat/bots/{slug}/chat",
+        "/mcp/tools/call"
+      ],
+      "inOpenapi": true,
+      "note": "MCP chat_bot_run 经 /mcp/tools/call；公开路径在 OpenAPI 中以 /public/chat 摘要"
+    },
+    {
+      "ac": "AC-24",
+      "summary": "MCP Client 服务器注册",
+      "paths": [
+        "/mcp-servers",
+        "/mcp-servers/{id}",
+        "/mcp-servers/{id}/test",
+        "/mcp-servers/{id}/tools"
+      ],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-26",
+      "summary": "插件注册",
+      "paths": ["/plugins", "/plugins/register"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-27",
+      "summary": "插件启用/禁用",
+      "paths": ["/plugins/{id}/enable", "/plugins/{id}/disable"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-31",
+      "summary": "i18n 目录与 bundle",
+      "paths": [
+        "/i18n/catalog-version",
+        "/i18n/locales",
+        "/i18n/locales/{code}",
+        "/i18n/bundles/{locale}/{namespace}"
+      ],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-32",
+      "summary": "用户偏好（含 locale）",
+      "paths": ["/users/me/preferences"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-33",
+      "summary": "主题目录",
+      "paths": [
+        "/themes/catalog-version",
+        "/themes",
+        "/themes/{themeId}",
+        "/themes/{themeId}/tokens"
+      ],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-34",
+      "summary": "主题偏好",
+      "paths": ["/users/me/preferences"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-35",
+      "summary": "Lite 安装与首启",
+      "paths": [
+        "/health",
+        "/ready",
+        "/setup/checklist",
+        "/auth/status",
+        "/auth/setup",
+        "/system/features"
+      ],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-36",
+      "summary": "Standard 就绪探针",
+      "paths": ["/ready"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-37",
+      "summary": "Webhook 幂等",
+      "paths": ["/webhook/{workflowId}/{webhookPath}"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-38",
+      "summary": "Webhook HMAC",
+      "paths": ["/webhook/{workflowId}/{webhookPath}"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-39",
+      "summary": "首启 checklist",
+      "paths": ["/setup/checklist"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-40",
+      "summary": "Admin i18n/theme",
+      "paths": ["/admin/i18n/{locale}", "/admin/themes/{theme}"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-42",
+      "summary": "执行快照",
+      "paths": [
+        "/workflows/{workflowId}/executions",
+        "/executions/{executionId}"
+      ],
+      "inOpenapi": true
+    },
+    {
+      "ac": "AC-43",
+      "summary": "Runner 列表",
+      "paths": ["/runners"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "FR-16",
+      "summary": "MCP Access Token",
+      "paths": ["/mcp-tokens", "/mcp-tokens/{id}"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "FR-7",
+      "summary": "内置模板",
+      "paths": ["/templates", "/templates/{templateId}/clone"],
+      "inOpenapi": true
+    },
+    {
+      "ac": "FR-10",
+      "summary": "凭证",
+      "paths": [
+        "/credentials",
+        "/credentials/{credentialId}",
+        "/credentials/{credentialId}/test"
+      ],
+      "inOpenapi": true
+    }
+  ]
+}

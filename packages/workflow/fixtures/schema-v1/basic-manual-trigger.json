@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "name": "Basic Manual Trigger",
+  "nodes": [
+    {
+      "id": "t1",
+      "type": "manualTrigger",
+      "name": "Start",
+      "position": { "x": 0, "y": 0 },
+      "parameters": {}
+    },
+    {
+      "id": "set1",
+      "type": "set",
+      "name": "Set Values",
+      "position": { "x": 220, "y": 0 },
+      "parameters": {
+        "values": [{ "name": "greeting", "value": "hello" }]
+      }
+    }
+  ],
+  "connections": [{ "from": "t1", "to": "set1" }]
+}

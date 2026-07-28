@@ -1,0 +1,6 @@
+{
+  "name": "rxwf-skill-starter",
+  "workflows": {
+    "enabled": true
+  }
+}

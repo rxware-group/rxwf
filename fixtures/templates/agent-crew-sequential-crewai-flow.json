@@ -1,0 +1,109 @@
+{
+  "category": "agent",
+  "description": "Crew 顺序编排（CrewAI Flow 模式 + 评测）：linear flowGraph + enableEval",
+  "schemaVersion": 1,
+  "name": "Crew 顺序 CrewAI Flow",
+  "settings": { "workflowKind": "agent" },
+  "nodes": [
+    {
+      "id": "tr",
+      "type": "manualTrigger",
+      "name": "Manual",
+      "position": { "x": 80, "y": 80 },
+      "parameters": {}
+    },
+    {
+      "id": "crew",
+      "type": "crewSequential",
+      "name": "Crew",
+      "position": { "x": 320, "y": 80 },
+      "parameters": {
+        "executionBackend": "crewai",
+        "crewaiFlowMode": "flow",
+        "enableEval": true
+      }
+    },
+    {
+      "id": "r1",
+      "type": "aiAgent",
+      "name": "Researcher",
+      "position": { "x": 80, "y": 220 },
+      "parameters": {
+        "role": "Researcher",
+        "goal": "Analyze the input and produce a concise summary",
+        "backstory": "",
+        "promptType": "auto",
+        "text": "",
+        "systemMessage": "",
+        "maxIterations": 10,
+        "timeoutMs": 120000,
+        "returnIntermediateSteps": true,
+        "sessionId": "",
+        "expectedOutput": "A short bullet summary"
+      }
+    },
+    {
+      "id": "r2",
+      "type": "aiAgent",
+      "name": "Writer",
+      "position": { "x": 320, "y": 220 },
+      "parameters": {
+        "role": "Writer",
+        "goal": "Improve clarity of the prior member output",
+        "backstory": "",
+        "promptType": "auto",
+        "text": "",
+        "systemMessage": "",
+        "maxIterations": 10,
+        "timeoutMs": 120000,
+        "returnIntermediateSteps": true,
+        "sessionId": ""
+      }
+    },
+    {
+      "id": "mdl1",
+      "type": "aiChatModel",
+      "name": "Model R",
+      "position": { "x": 80, "y": 360 },
+      "parameters": { "provider": "ollama", "model": "llama3" }
+    },
+    {
+      "id": "mdl2",
+      "type": "aiChatModel",
+      "name": "Model W",
+      "position": { "x": 320, "y": 360 },
+      "parameters": { "provider": "ollama", "model": "llama3" }
+    },
+    {
+      "id": "t1",
+      "type": "toolMcp",
+      "name": "ListDir R",
+      "position": { "x": 80, "y": 440 },
+      "parameters": {
+        "serverId": "srv-1",
+        "tools": ["list_directory"],
+        "toolDescription": "List files for researcher"
+      }
+    },
+    {
+      "id": "t2",
+      "type": "toolMcp",
+      "name": "ListDir W",
+      "position": { "x": 320, "y": 440 },
+      "parameters": {
+        "serverId": "srv-1",
+        "tools": ["list_directory"],
+        "toolDescription": "List files for writer"
+      }
+    }
+  ],
+  "connections": [
+    { "from": "tr", "to": "crew" },
+    { "from": "r1", "to": "crew", "fromOutput": "crew_member", "toInput": "crew_member" },
+    { "from": "r2", "to": "crew", "fromOutput": "crew_member", "toInput": "crew_member" },
+    { "from": "mdl1", "to": "r1", "fromOutput": "ai_languageModel", "toInput": "ai_languageModel" },
+    { "from": "mdl2", "to": "r2", "fromOutput": "ai_languageModel", "toInput": "ai_languageModel" },
+    { "from": "t1", "to": "r1", "fromOutput": "ai_tool", "toInput": "ai_tool" },
+    { "from": "t2", "to": "r2", "fromOutput": "ai_tool", "toInput": "ai_tool" }
+  ]
+}
