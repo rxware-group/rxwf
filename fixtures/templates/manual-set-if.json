@@ -1,0 +1,32 @@
+{
+  "description": "手动触发 → Set 变量 → If 分支示例",
+  "schemaVersion": 1,
+  "name": "Manual Set If",
+  "nodes": [
+    {
+      "id": "m1",
+      "type": "manualtrigger",
+      "name": "Start",
+      "position": { "x": 0, "y": 0 },
+      "parameters": {}
+    },
+    {
+      "id": "set1",
+      "type": "set",
+      "name": "Set flag",
+      "position": { "x": 200, "y": 0 },
+      "parameters": { "values": [{ "name": "ok", "value": true }] }
+    },
+    {
+      "id": "if1",
+      "type": "if",
+      "name": "Branch",
+      "position": { "x": 420, "y": 0 },
+      "parameters": { "conditions": [{ "left": "={{ $json.ok }}", "operator": "equals", "right": true }] }
+    }
+  ],
+  "connections": [
+    { "from": "m1", "to": "set1" },
+    { "from": "set1", "to": "if1" }
+  ]
+}

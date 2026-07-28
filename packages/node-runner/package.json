@@ -1,0 +1,37 @@
+{
+  "name": "@rxwf/node-runner",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rxwf/credential": "workspace:*",
+    "@rxwf/expression": "workspace:*",
+    "@rxwf/i18n-catalog": "workspace:*",
+    "@rxwf/ai-runtime-stub": "workspace:*",
+    "@rxwf/knowledge": "workspace:*",
+    "@rxwf/providers-contracts": "workspace:*",
+    "@rxwf/runner-protocol": "workspace:*",
+    "@rxwf/mcp-client-pool": "workspace:*",
+    "@rxwf/sandbox": "workspace:*",
+    "@rxwf/skill-runtime": "workspace:*",
+    "@rxwf/shared": "workspace:*",
+    "@rxwf/workflow": "workspace:*",
+    "pg": "^8.16.0",
+    "undici": "^7.13.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

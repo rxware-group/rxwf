@@ -1,0 +1,91 @@
+/**
+ * 全站统一滚动条：无箭头、透明轨道、滑块居中于边距带。
+ *
+ * 设计规范：docs/ux-ui-design.md §4.7
+ * Token：--rxwf-page-gutter / --rxwf-scroll-gutter / --rxwf-scrollbar-size（styles.css :root）
+ * 滚动容器：padding-inline-end 为 0，右侧 gutter 由 scrollbar-gutter: stable + 轨道宽 --rxwf-scroll-gutter 提供。
+ *
+ * Chrome 121+：若同时写 scrollbar-width，会启用系统滚动条（带三角箭头），
+ * ::-webkit-scrollbar 会失效。Chrome 仅使用下方 WebKit 规则。
+ * Firefox：无 WebKit 伪元素，用 @supports not selector(::-webkit-scrollbar)。
+ * Firefox 无法像素级居中滑块，保持 thin + 透明轨道。
+ */
+
+@supports not selector(::-webkit-scrollbar) {
+  html,
+  html * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--rxwf-scrollbar-thumb) transparent;
+  }
+}
+
+*::-webkit-scrollbar {
+  width: var(--rxwf-scroll-gutter);
+  height: var(--rxwf-scroll-gutter);
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track-piece,
+*::-webkit-scrollbar-track-piece:start,
+*::-webkit-scrollbar-track-piece:end {
+  background: transparent;
+  border: none;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--rxwf-scrollbar-thumb);
+  border-radius: 999px;
+  border: calc((var(--rxwf-scroll-gutter) - var(--rxwf-scrollbar-size)) / 2) solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:vertical {
+  min-height: 32px;
+  min-width: var(--rxwf-scrollbar-size);
+}
+
+*::-webkit-scrollbar-thumb:horizontal {
+  min-width: 32px;
+  min-height: var(--rxwf-scrollbar-size);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--rxwf-scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button:single-button,
+*::-webkit-scrollbar-button:double-button,
+*::-webkit-scrollbar-button:vertical,
+*::-webkit-scrollbar-button:horizontal,
+*::-webkit-scrollbar-button:vertical:start,
+*::-webkit-scrollbar-button:vertical:end,
+*::-webkit-scrollbar-button:horizontal:start,
+*::-webkit-scrollbar-button:horizontal:end,
+*::-webkit-scrollbar-button:vertical:start:decrement,
+*::-webkit-scrollbar-button:vertical:end:increment,
+*::-webkit-scrollbar-button:horizontal:start:decrement,
+*::-webkit-scrollbar-button:horizontal:end:increment,
+*::-webkit-scrollbar-button:vertical:increment,
+*::-webkit-scrollbar-button:vertical:decrement,
+*::-webkit-scrollbar-button:horizontal:increment,
+*::-webkit-scrollbar-button:horizontal:decrement {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}

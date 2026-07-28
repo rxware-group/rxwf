@@ -1,0 +1,90 @@
+{
+  "category": "agent",
+  "description": "Group Chat orchestrator：Orchestrator LLM 动态选择下一发言者",
+  "schemaVersion": 1,
+  "name": "Group Chat (Orchestrator)",
+  "settings": { "workflowKind": "agent" },
+  "nodes": [
+    {
+      "id": "tr",
+      "type": "manualTrigger",
+      "name": "Manual",
+      "position": { "x": 80, "y": 40 },
+      "parameters": {}
+    },
+    {
+      "id": "gc",
+      "type": "groupChat",
+      "name": "Group Chat",
+      "position": { "x": 320, "y": 120 },
+      "parameters": {
+        "maxRounds": 8,
+        "speakerSelection": "orchestrator",
+        "orchestratorProvider": "ollama",
+        "orchestratorModel": "llama3",
+        "terminationKeywords": "TERMINATE,FINISH,完成",
+        "returnTranscript": true,
+        "userProxyEnabled": true,
+        "userProxyEveryNRounds": 0,
+        "userProxyPrompt": "请输入纠偏或补充…"
+      }
+    },
+    {
+      "id": "a1",
+      "type": "aiAgent",
+      "name": "Analyst",
+      "position": { "x": 80, "y": 220 },
+      "parameters": {
+        "role": "Analyst",
+        "goal": "Analyze and propose solutions",
+        "backstory": "",
+        "promptType": "auto",
+        "text": "",
+        "systemMessage": "",
+        "maxIterations": 10,
+        "timeoutMs": 120000,
+        "returnIntermediateSteps": true,
+        "sessionId": ""
+      }
+    },
+    {
+      "id": "a2",
+      "type": "aiAgent",
+      "name": "Reviewer",
+      "position": { "x": 400, "y": 220 },
+      "parameters": {
+        "role": "Reviewer",
+        "goal": "Critique and refine",
+        "backstory": "",
+        "promptType": "auto",
+        "text": "",
+        "systemMessage": "",
+        "maxIterations": 10,
+        "timeoutMs": 120000,
+        "returnIntermediateSteps": true,
+        "sessionId": ""
+      }
+    },
+    {
+      "id": "mdl1",
+      "type": "aiChatModel",
+      "name": "Model A",
+      "position": { "x": 80, "y": 340 },
+      "parameters": { "provider": "ollama", "model": "llama3" }
+    },
+    {
+      "id": "mdl2",
+      "type": "aiChatModel",
+      "name": "Model B",
+      "position": { "x": 400, "y": 340 },
+      "parameters": { "provider": "ollama", "model": "llama3" }
+    }
+  ],
+  "connections": [
+    { "from": "tr", "to": "gc" },
+    { "from": "a1", "to": "gc", "fromOutput": "group_member", "toInput": "group_member" },
+    { "from": "a2", "to": "gc", "fromOutput": "group_member", "toInput": "group_member" },
+    { "from": "mdl1", "to": "a1", "fromOutput": "ai_languageModel", "toInput": "ai_languageModel" },
+    { "from": "mdl2", "to": "a2", "fromOutput": "ai_languageModel", "toInput": "ai_languageModel" }
+  ]
+}

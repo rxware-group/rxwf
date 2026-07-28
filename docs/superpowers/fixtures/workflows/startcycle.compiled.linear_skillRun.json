@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "name": "Start Development Cycle",
+  "nodes": [
+    {
+      "id": "wf-trigger",
+      "type": "manualTrigger",
+      "name": "Start",
+      "position": { "x": 80, "y": 120 },
+      "parameters": {}
+    },
+    {
+      "id": "wf-chat-model",
+      "type": "aiChatModel",
+      "name": "Chat Model",
+      "position": { "x": 80, "y": 280 },
+      "parameters": { "provider": "ollama", "model": "llama3" }
+    },
+    {
+      "id": "wf-pm-spec",
+      "type": "skillRun",
+      "name": "PM — write_specs",
+      "position": { "x": 360, "y": 120 },
+      "parameters": {
+        "skillSource": "path",
+        "skillPath": "write_specs",
+        "prompt": "Execute skill using idea: {{input.idea}}",
+        "agentRoleHint": "product_manager",
+        "workspaceRoot": "{{$workspaceRoot}}"
+      }
+    },
+    {
+      "id": "wf-hitl-pm-spec",
+      "type": "humanApproval",
+      "name": "Approve PM spec",
+      "position": { "x": 640, "y": 120 },
+      "parameters": {
+        "prompt": "请审批步骤 pm-spec 产出后继续（Antigravity：直至 Approved）",
+        "allowReject": true,
+        "hitlLoopOnReject": true
+      }
+    },
+    {
+      "id": "wf-implement",
+      "type": "skillRun",
+      "name": "Engineer — generate_code",
+      "position": { "x": 920, "y": 120 },
+      "parameters": {
+        "skillSource": "path",
+        "skillPath": "generate_code",
+        "agentRoleHint": "full_stack_engineer",
+        "workspaceRoot": "{{$workspaceRoot}}"
+      }
+    },
+    {
+      "id": "wf-qa",
+      "type": "skillRun",
+      "name": "QA — audit_code",
+      "position": { "x": 1200, "y": 120 },
+      "parameters": {
+        "skillSource": "path",
+        "skillPath": "audit_code",
+        "agentRoleHint": "qa_engineer",
+        "workspaceRoot": "{{$workspaceRoot}}"
+      }
+    },
+    {
+      "id": "wf-deploy",
+      "type": "skillRun",
+      "name": "DevOps — deploy_app",
+      "position": { "x": 1480, "y": 120 },
+      "parameters": {
+        "skillSource": "path",
+        "skillPath": "deploy_app",
+        "agentRoleHint": "devops",
+        "workspaceRoot": "{{$workspaceRoot}}"
+      }
+    }
+  ],
+  "connections": [
+    { "from": "wf-trigger", "to": "wf-pm-spec" },
+    { "from": "wf-chat-model", "to": "wf-pm-spec", "toInput": "ai_languageModel" },
+    { "from": "wf-pm-spec", "to": "wf-hitl-pm-spec" },
+    { "from": "wf-hitl-pm-spec", "to": "wf-implement" },
+    { "from": "wf-chat-model", "to": "wf-implement", "toInput": "ai_languageModel" },
+    { "from": "wf-implement", "to": "wf-qa" },
+    { "from": "wf-chat-model", "to": "wf-qa", "toInput": "ai_languageModel" },
+    { "from": "wf-qa", "to": "wf-deploy" },
+    { "from": "wf-chat-model", "to": "wf-deploy", "toInput": "ai_languageModel" }
+  ],
+  "meta": {
+    "source": "rxwf/workflow/startcycle",
+    "templateId": "startcycle",
+    "compileMode": "linear_skillRun",
+    "compileVersion": 1,
+    "provenance": "antigravity",
+    "pendingHitlLoop": true,
+    "warnings": []
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "@rxwf/providers-standard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rxwf/env": "workspace:*",
+    "@rxwf/variables": "workspace:*",
+    "@rxwf/execution": "workspace:*",
+    "@rxwf/providers-contracts": "workspace:*",
+    "@rxwf/chat": "workspace:*",
+    "@rxwf/chat-bots": "workspace:*",
+    "@rxwf/knowledge": "workspace:*",
+    "@rxwf/model-catalog": "workspace:*",
+    "@rxwf/shared": "workspace:*",
+    "@rxwf/workflow": "workspace:*",
+    "bullmq": "^5.56.0",
+    "drizzle-orm": "^0.43.1",
+    "ioredis": "^5.6.1",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

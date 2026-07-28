@@ -1,0 +1,28 @@
+{
+  "name": "@rxwf/system-settings",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rxwf/credential": "workspace:*",
+    "@rxwf/providers-lite": "workspace:*",
+    "drizzle-orm": "^0.43.1",
+    "nodemailer": "^7.0.3"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.17",
+    "better-sqlite3": "^11.10.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

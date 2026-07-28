@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "name": "Fixture Flow",
+  "nodes": [
+    {
+      "id": "t1",
+      "type": "manualtrigger",
+      "name": "Start",
+      "position": { "x": 0, "y": 0 },
+      "parameters": {}
+    }
+  ],
+  "connections": []
+}
